@@ -1,0 +1,10 @@
+C:\AmbrosiaServer\bin\Release\AmbrosiaServer.exe
+C:\AmbrosiaServer\bin\Release\AmbrosiaServer.pdb
+C:\AmbrosiaServer\obj\Release\ResolveAssemblyReference.cache
+C:\AmbrosiaServer\obj\Release\AmbrosiaServer.exe
+C:\AmbrosiaServer\obj\Release\AmbrosiaServer.pdb
+C:\AmbrosiaServer\bin\Release\Newtonsoft.Json.dll
+C:\AmbrosiaServer\bin\Release\Newtonsoft.Json.pdb
+C:\AmbrosiaServer\bin\Release\Newtonsoft.Json.xml
+C:\AmbrosiaServer\bin\Release\AmbrosiaServer.exe.config
+C:\AmbrosiaServer\bin\Release\mysql.data.dll

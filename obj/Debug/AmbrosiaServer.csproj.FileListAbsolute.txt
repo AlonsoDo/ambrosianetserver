@@ -1,0 +1,10 @@
+C:\AmbrosiaServer\obj\Debug\ResolveAssemblyReference.cache
+C:\AmbrosiaServer\bin\Debug\AmbrosiaServer.exe
+C:\AmbrosiaServer\bin\Debug\AmbrosiaServer.pdb
+C:\AmbrosiaServer\obj\Debug\AmbrosiaServer.exe
+C:\AmbrosiaServer\obj\Debug\AmbrosiaServer.pdb
+C:\AmbrosiaServer\bin\Debug\Newtonsoft.Json.dll
+C:\AmbrosiaServer\bin\Debug\Newtonsoft.Json.pdb
+C:\AmbrosiaServer\bin\Debug\Newtonsoft.Json.xml
+C:\AmbrosiaServer\bin\Debug\AmbrosiaServer.exe.config
+C:\AmbrosiaServer\bin\Debug\mysql.data.dll

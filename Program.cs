@@ -16,6 +16,8 @@ namespace AmbrosiaServer
     class Program
     {
         public static Hashtable clientsList = new Hashtable();
+        public static List<Impresoras> impresoras = new List<Impresoras>();
+        public static List<Terminales> terminales = new List<Terminales>();
         
         static void Main(string[] args)
         {
@@ -23,8 +25,7 @@ namespace AmbrosiaServer
             TcpListener serverSocket = new TcpListener(ip,8888);
             TcpClient clientSocket = default(TcpClient);
             string ClientId = null;
-
-            //GetPruebaData getPruebaData = new GetPruebaData();
+            
 
             string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
             MySqlConnection conn = new MySqlConnection(connectionString);
@@ -33,12 +34,17 @@ namespace AmbrosiaServer
                 Console.WriteLine("Connecting to MySQL...");
                 conn.Open();
                 // Perform database operations
-                string sql = "SELECT * FROM elementos";
+                string sql = "SELECT elementos.ElementoId as 'Elemento', impresoraconfig.NombreImpresora as 'NombreImp' FROM elementos JOIN impresoraconfig on elementos.ElementoId=impresoraconfig.ElementoId";
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 MySqlDataReader rdr = cmd.ExecuteReader();
                 while (rdr.Read())
                 {
-                    Console.WriteLine(rdr[3] + " -- " + rdr[4]);
+                    Console.WriteLine(rdr[0] + " -- " + rdr[1]);
+                    impresoras.Add(new Impresoras()
+                    {
+                        ElementoId = rdr.GetInt32(0),
+                        NombreImpresora = rdr.GetString(1)                        
+                    });
                 }
                 rdr.Close();
             }
@@ -47,7 +53,33 @@ namespace AmbrosiaServer
                 Console.WriteLine(ex.ToString());
             }
             conn.Close();
-            Console.WriteLine("Done.");             
+            Console.WriteLine("Done.");
+
+            try
+            {
+                Console.WriteLine("Connecting to MySQL...");
+                conn.Open();
+                // Perform database operations
+                string sql = "SELECT elementos.ElementoId as 'Elemento', terminalconfig.NombreTerminal as 'NombreTer' FROM elementos JOIN terminalconfig on elementos.ElementoId=terminalconfig.ElementoId";
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+                MySqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    Console.WriteLine(rdr[0] + " -- " + rdr[1]);
+                    terminales.Add(new Terminales()
+                    {
+                        ElementoId = rdr.GetInt32(0),
+                        NombreTerminal = rdr.GetString(1)
+                    });
+                }
+                rdr.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            conn.Close();
+            Console.WriteLine("Done.");
             
             //Arrancar servidor de sockets
             serverSocket.Start();
@@ -58,7 +90,7 @@ namespace AmbrosiaServer
                 // Recibir conexion cliente
                 clientSocket = serverSocket.AcceptTcpClient();
 
-                byte[] bytesFrom = new byte[10025];
+                byte[] bytesFrom = new byte[262144];
                 string dataFromClient = null;
 
                 // Leer stream
@@ -157,7 +189,9 @@ namespace AmbrosiaServer
                             PadreId = rdr.GetInt32(rdr.GetOrdinal("PadreId")),
                             Descripcion = rdr.GetString(rdr.GetOrdinal("Descripcion")),
                             PathImg = rdr.GetString(rdr.GetOrdinal("PathImg")),
-                            Final = rdr.GetInt16(rdr.GetOrdinal("Final"))
+                            Final = rdr.GetInt16(rdr.GetOrdinal("Final")),
+                            Precio = rdr.GetDecimal(rdr.GetOrdinal("Precio")),
+                            Impuesto = rdr.GetDecimal(rdr.GetOrdinal("Impuesto"))
                         });
 
                     }
@@ -180,7 +214,7 @@ namespace AmbrosiaServer
 
             private void SocketTrafic()
             {
-                byte[] bytesFrom = new byte[10025];
+                byte[] bytesFrom = new byte[262144];
                 string dataFromClient = null;                
 
                 while ((true))

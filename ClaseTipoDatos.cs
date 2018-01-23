@@ -50,5 +50,37 @@ namespace AmbrosiaServer
         public int ElementoId { get; set; }
         public string NombreTerminal { get; set; }
     }
+
+    public class LineaPedido
+    {
+        public int IdElemento { get; set; }
+        public int Unids { get; set; }
+        public string Descripcion { get; set; }
+    }
+
+    public class Envio
+    {
+        public string NombreEvento { get; set; }
+        public string NumeCuen { get; set; }
+        public List<LineaPedido> dataLinea { get; set; }
+    }
+
+    public class SalidaPedido
+    {
+        public int Unids { get; set; }
+        public string Descripcion { get; set; }
+    }
+
+    public class ImpresoraSalida
+    {
+        public string NombreImpresora { get; set; }
+        public List<SalidaPedido> dataLinea { get; set; }
+    }
+
+    public class TerminalSalida
+    {
+        public string NombreTerminal { get; set; }
+        public List<SalidaPedido> dataLinea { get; set; }
+    }
     
 }

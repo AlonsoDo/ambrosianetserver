@@ -18,11 +18,12 @@ namespace AmbrosiaServer
         public static Hashtable clientsList = new Hashtable();
         public static List<Impresoras> impresoras = new List<Impresoras>();
         public static List<Terminales> terminales = new List<Terminales>();
+        public static Envio PedidoEnviado = new Envio();
         
         static void Main(string[] args)
         {
             IPAddress ip = IPAddress.Parse("192.168.1.2");            
-            TcpListener serverSocket = new TcpListener(ip,8888);
+            TcpListener serverSocket = new TcpListener(ip,10001);
             TcpClient clientSocket = default(TcpClient);
             string ClientId = null;
             
@@ -144,6 +145,7 @@ namespace AmbrosiaServer
             TcpClient clientSocket;
             string ClientId;            
             Thread ctThread;
+            Envio envioRecibido = new Envio();
 
             public void startClient(TcpClient inClientSocket, string inClientId)
             {
@@ -199,6 +201,9 @@ namespace AmbrosiaServer
                     elementsData.data = elementosList;
                     output = JsonConvert.SerializeObject(elementsData);
                     Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
                 }
                 catch (Exception ex)
                 {
@@ -206,10 +211,7 @@ namespace AmbrosiaServer
                 }
                 conn.Close();
                 Console.WriteLine("Done.");
-
-                broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
-                broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
-                broadcastStream.Flush();
+                
             }
 
             private void SocketTrafic()
@@ -246,8 +248,18 @@ namespace AmbrosiaServer
                             EventoAskForElements eventoAskForElements = new EventoAskForElements();
                             eventoAskForElements = JsonConvert.DeserializeObject<EventoAskForElements>(dataFromClient);
                             Console.WriteLine("PadreId:" + eventoAskForElements.PadreId);
+                            //Thread.Sleep(2000);
                             SendElementsData(eventoAskForElements.PadreId);
-                        }                                           
+                        }
+                        else if (EventosControl.NombreEvento == "EnvioPedido")
+                        {
+                            Envio Sended = new Envio();
+                            Sended = JsonConvert.DeserializeObject<Envio>(dataFromClient);
+                            Console.WriteLine("Envio de la cuenta: " + Sended.NumeCuen);
+                            PedidoEnviado = Sended;
+                            SendToPrinters();
+                            SendToTerminals();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -257,7 +269,150 @@ namespace AmbrosiaServer
 
                 ctThread.Abort();
                 return;            
-            }            
+            }
+
+            public void SendToPrinters()
+            {
+                List<ImpresoraSalida> impresoraSalida = new List<ImpresoraSalida>();
+                SalidaPedido salidaPedido = new SalidaPedido();
+                bool Found = false;
+                
+                //Recorrer Lineas del pedido
+                for (int i = 0; i < PedidoEnviado.dataLinea.Count; i++)
+                {
+                    Console.WriteLine(PedidoEnviado.dataLinea[i].Descripcion);
+
+                    // Buscar Impresora segun Id Elemento
+                    for (int j = 0; j < impresoras.Count; j++)
+                    {
+                        if (PedidoEnviado.dataLinea[i].IdElemento == impresoras[j].ElementoId)
+                        {
+                            Console.WriteLine(impresoras[j].NombreImpresora);
+
+                            if (impresoraSalida.Count == 0)
+                            {
+                                SalidaPedido Linea = new SalidaPedido();
+                                Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
+                                Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                List<SalidaPedido> dataLineas = new List<SalidaPedido>();
+                                dataLineas.Add(Linea);
+
+                                impresoraSalida.Add(new ImpresoraSalida()
+                                {
+                                    NombreImpresora = impresoras[j].NombreImpresora,
+                                    dataLinea = dataLineas
+                                });
+                            }
+                            else
+                            {
+                                Found = false;
+                                
+                                for (int k = 0; k < impresoraSalida.Count; k++)
+                                {
+                                    if (impresoras[j].NombreImpresora == impresoraSalida[k].NombreImpresora)
+                                    {
+                                        //Añado solo linea al detalle
+                                        impresoraSalida[k].dataLinea.Add(new SalidaPedido()
+                                        {
+                                            Unids = PedidoEnviado.dataLinea[i].Unids,
+                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion
+                                        });
+                                        Found = true;
+                                        break;
+                                    }                                    
+                                }
+                                if (Found == false)    
+                                {
+                                    // Impresora nueva y linea al detalle
+                                    SalidaPedido Linea = new SalidaPedido();
+                                    Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
+                                    Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    List<SalidaPedido> dataLineas = new List<SalidaPedido>();
+                                    dataLineas.Add(Linea);
+
+                                    impresoraSalida.Add(new ImpresoraSalida()
+                                    {
+                                        NombreImpresora = impresoras[j].NombreImpresora,
+                                        dataLinea = dataLineas
+                                    });                                        
+                                }                                
+                            }
+                        }
+                    }                    
+                }
+            }
+
+            public void SendToTerminals()
+            {
+                List<TerminalSalida> terminalSalida = new List<TerminalSalida>();
+                SalidaPedido salidaPedido = new SalidaPedido();
+                bool Found = false;
+                
+                //Recorrer Lineas del pedido
+                for (int i = 0; i < PedidoEnviado.dataLinea.Count; i++)
+                {
+                    Console.WriteLine(PedidoEnviado.dataLinea[i].Descripcion);
+
+                    // Buscar Terminal segun Id Elemento
+                    for (int j = 0; j < terminales.Count; j++)
+                    {
+                        if (PedidoEnviado.dataLinea[i].IdElemento == terminales[j].ElementoId)
+                        {
+                            Console.WriteLine(terminales[j].NombreTerminal);
+
+                            if (terminalSalida.Count == 0)
+                            {
+                                SalidaPedido Linea = new SalidaPedido();
+                                Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
+                                Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                List<SalidaPedido> dataLineas = new List<SalidaPedido>();
+                                dataLineas.Add(Linea);
+
+                                terminalSalida.Add(new TerminalSalida()
+                                {
+                                    NombreTerminal = terminales[j].NombreTerminal,
+                                    dataLinea = dataLineas
+                                });
+                            }
+                            else
+                            {
+                                Found = false;
+                                
+                                for (int k = 0; k < terminalSalida.Count; k++)
+                                {
+                                    if (terminales[j].NombreTerminal == terminalSalida[k].NombreTerminal)
+                                    {
+                                        //Añado solo linea al detalle
+                                        terminalSalida[k].dataLinea.Add(new SalidaPedido()
+                                        {
+                                            Unids = PedidoEnviado.dataLinea[i].Unids,
+                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion
+                                        });
+                                        Found = true;
+                                        break;
+                                    }                                    
+                                }
+                                if (Found == false)    
+                                {
+                                    // Terminal nueva y linea al detalle
+                                    SalidaPedido Linea = new SalidaPedido();
+                                    Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
+                                    Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    List<SalidaPedido> dataLineas = new List<SalidaPedido>();
+                                    dataLineas.Add(Linea);
+
+                                    terminalSalida.Add(new TerminalSalida()
+                                    {
+                                        NombreTerminal = terminales[j].NombreTerminal,
+                                        dataLinea = dataLineas
+                                    });                                        
+                                }                                
+                            }
+                        }
+                    }                    
+                }
+            }
+          
         }    
     }
 }

@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using System.Configuration;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+using System.Drawing;
+using System.Drawing.Printing;
 
 namespace AmbrosiaServer
 {    
@@ -18,7 +20,7 @@ namespace AmbrosiaServer
         public static Hashtable clientsList = new Hashtable();
         public static List<Impresoras> impresoras = new List<Impresoras>();
         public static List<Terminales> terminales = new List<Terminales>();
-        public static Envio PedidoEnviado = new Envio();
+        public static Envio PedidoEnviado = new Envio();        
         
         static void Main(string[] args)
         {
@@ -146,6 +148,8 @@ namespace AmbrosiaServer
             string ClientId;            
             Thread ctThread;
             Envio envioRecibido = new Envio();
+            public List<ImpresoraSalida> impresoraSalida = new List<ImpresoraSalida>();
+            public int IndexImpresora = 0;
 
             public void startClient(TcpClient inClientSocket, string inClientId)
             {
@@ -178,7 +182,7 @@ namespace AmbrosiaServer
                     
                     conn.Open();
                     // Perform database operations
-                    string sql = "SELECT * FROM elementos WHERE CompanyId=4 AND PadreId=" + PadreId;
+                    string sql = "SELECT * FROM elementos WHERE PadreId=" + PadreId;
                     MySqlCommand cmd = new MySqlCommand(sql, conn);
                     MySqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -193,7 +197,9 @@ namespace AmbrosiaServer
                             PathImg = rdr.GetString(rdr.GetOrdinal("PathImg")),
                             Final = rdr.GetInt16(rdr.GetOrdinal("Final")),
                             Precio = rdr.GetDecimal(rdr.GetOrdinal("Precio")),
-                            Impuesto = rdr.GetDecimal(rdr.GetOrdinal("Impuesto"))
+                            Impuesto = rdr.GetDecimal(rdr.GetOrdinal("Impuesto")),
+                            ImprimirEnFactura = rdr.GetInt16(rdr.GetOrdinal("ImprimirEnFactura")),
+                            ImprimirEnComanda = rdr.GetInt16(rdr.GetOrdinal("ImprimirEnComanda"))
                         });
 
                     }
@@ -257,7 +263,9 @@ namespace AmbrosiaServer
                             Sended = JsonConvert.DeserializeObject<Envio>(dataFromClient);
                             Console.WriteLine("Envio de la cuenta: " + Sended.NumeCuen);
                             PedidoEnviado = Sended;
-                            SendToPrinters();
+                            //Grabar datos aqui
+                            GuardarPedido();
+                            SendToPrinters(Sended.NumeCuen);
                             SendToTerminals();
                         }
                     }
@@ -271,9 +279,9 @@ namespace AmbrosiaServer
                 return;            
             }
 
-            public void SendToPrinters()
+            public void SendToPrinters(string NumeCuen)
             {
-                List<ImpresoraSalida> impresoraSalida = new List<ImpresoraSalida>();
+                //List<ImpresoraSalida> impresoraSalida = new List<ImpresoraSalida>();
                 SalidaPedido salidaPedido = new SalidaPedido();
                 bool Found = false;
                 
@@ -294,6 +302,7 @@ namespace AmbrosiaServer
                                 SalidaPedido Linea = new SalidaPedido();
                                 Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
                                 Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
                                 List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                 dataLineas.Add(Linea);
 
@@ -315,7 +324,8 @@ namespace AmbrosiaServer
                                         impresoraSalida[k].dataLinea.Add(new SalidaPedido()
                                         {
                                             Unids = PedidoEnviado.dataLinea[i].Unids,
-                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion
+                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion,
+                                            TabLevel = PedidoEnviado.dataLinea[i].TabLevel
                                         });
                                         Found = true;
                                         break;
@@ -327,6 +337,7 @@ namespace AmbrosiaServer
                                     SalidaPedido Linea = new SalidaPedido();
                                     Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
                                     Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
                                     List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                     dataLineas.Add(Linea);
 
@@ -340,6 +351,72 @@ namespace AmbrosiaServer
                         }
                     }                    
                 }
+                ImprimirPedido(NumeCuen);
+            }
+
+            public void ImprimirPedido(string NumeCuen)
+            {
+                //Create a PrintDocument object
+                PrintDocument pd = new PrintDocument();
+
+                //pd.PrintPage += (sender, args) => pd_ImprimirEnvio(NumeCuen,args.Graphics);
+
+                for ( IndexImpresora = 0; IndexImpresora < impresoraSalida.Count; IndexImpresora++)
+                {
+                    pd.PrintPage += (sender, args) => pd_ImprimirEnvio(NumeCuen, args.Graphics);
+                    
+                    //Set PrinterName name
+                    pd.PrinterSettings.PrinterName = impresoraSalida[IndexImpresora].NombreImpresora;
+
+                    int rows = impresoraSalida[IndexImpresora].dataLinea.Count;
+                    
+                    pd.DefaultPageSettings.PaperSize = new PaperSize("Ticket",400,(rows+2)*28);
+                    
+                    //Print the document
+                    pd.Print();
+
+                    pd.Dispose();
+                    
+                }
+
+                //Reset
+                impresoraSalida.Clear();
+            }
+
+            //The PrintPage event handler 
+            public void pd_ImprimirEnvio(string NumeCuen, Graphics graphics)
+            {
+                int y = 0;
+                List<SalidaPedido> salidaPedido = new List<SalidaPedido>();
+                salidaPedido = impresoraSalida[IndexImpresora].dataLinea;
+                
+                //Get the Graphics object
+                Graphics g = graphics;                
+
+                //Create a font Arial with size 16
+                Font font = new Font("Courier New",16,FontStyle.Bold);
+                
+                //Create a solid brush with black color
+                SolidBrush brush = new SolidBrush(Color.Black);
+
+                //Cabecera
+                string cabecera = "N:" + NumeCuen + " " + DateTime.Now.ToString("HH:mm");
+                g.DrawString(cabecera, font, brush, new Rectangle(0, y, 200, 28));
+                y = y + 28;    
+                
+                for (int i = 0; i < salidaPedido.Count; i++)
+                {
+                    string cUnids = salidaPedido[i].Unids.ToString();
+                    int LongUnids = salidaPedido[i].Unids.ToString().Length;
+                    int Spaces = 5 - LongUnids;
+                    cUnids = new String(' ', Spaces) + cUnids;
+
+                    int TabLavel = salidaPedido[i].TabLevel;
+                    string TabSpace = new String(' ', (TabLavel-1) * 3);
+                    //Draw 
+                    g.DrawString(TabSpace + cUnids + " " + salidaPedido[i].Descripcion, font, brush, new Rectangle(0, y, 400, 28));
+                    y = y + 28;
+                }            
             }
 
             public void SendToTerminals()
@@ -412,7 +489,85 @@ namespace AmbrosiaServer
                     }                    
                 }
             }
-          
+
+            public void GuardarPedido()
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                conn.Open();
+                
+                MySqlTransaction MyTransaction = conn.BeginTransaction();
+                MySqlCommand MyCommand = new MySqlCommand();
+                MyCommand.Transaction = MyTransaction;
+                MyCommand.Connection = conn;
+
+                try
+                {
+                    DateTime time = DateTime.Now;              
+                    string format = "yyyy-MM-dd HH:mm:ss";
+                    int NumeElem = PedidoEnviado.dataLinea.Count;
+                    string NombCuen = PedidoEnviado.NumeCuen;
+                    
+                    MyCommand.CommandText = "INSERT INTO lotes(Momento,NumeElem,NombCuen) VALUES ('" + time.ToString(format) + "'," + NumeElem + ",'" + NombCuen + "')"; 
+                    MyCommand.ExecuteNonQuery();
+                    int LastLoteId = (int)MyCommand.LastInsertedId;
+                    Console.WriteLine("Id lote:" + LastLoteId);
+                    
+                    int LastFactId = 0;
+                    MySqlCommand comando = new MySqlCommand("SELECT FacturaId FROM facturas WHERE Sesion=1 AND Estado='A' AND Nombre='" + NombCuen + "'",conn,MyTransaction);
+                    MySqlDataReader reader = comando.ExecuteReader();
+                    if (reader.HasRows)
+                    {                        
+                        reader.Read();
+                        Console.WriteLine("La factura existe:" + reader[0]);
+                        LastFactId = reader.GetInt32(0);
+                        reader.Close();
+                    }
+                    else
+                    {
+                        reader.Close();
+                        Console.WriteLine("La factura no existe");
+                        MySqlCommand comando2 = new MySqlCommand("INSERT INTO facturas(Nombre,FechaHora) VALUES ('" + NombCuen + "','" + time.ToString(format) + "')",conn,MyTransaction);
+                        comando2.ExecuteNonQuery();                        
+                        LastFactId = (int)comando2.LastInsertedId;
+                        Console.WriteLine("Nuevo Id factura:" + LastFactId);
+                    }                                        
+                    
+                    string Command = string.Empty;
+                    for (int i = 0; i < PedidoEnviado.dataLinea.Count; i++)
+                    {                        
+                        Command = Command + "(" + LastFactId + "," + PedidoEnviado.dataLinea[i].Unids + ",'"
+                            + PedidoEnviado.dataLinea[i].Descripcion + "','" + PedidoEnviado.dataLinea[i].Precio + "','"
+                            + PedidoEnviado.dataLinea[i].Impuesto + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + "," + LastLoteId + "),";
+                    }
+                    Command = Command.TrimEnd(',');
+                    MyCommand.CommandText = "INSERT INTO detafact(FacturaId,Unidades,Descripcion,Precio,Impuesto,ImpEnFac,LoteId) VALUES " + Command;
+                    MyCommand.ExecuteNonQuery();
+                    MyTransaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    try
+                    {
+                        MyTransaction.Rollback();
+                    }
+                    catch (MySqlException ex)
+                    {
+                        if (MyTransaction.Connection != null)
+                        {
+                            Console.WriteLine("An exception of type " + ex.GetType() +
+                            " was encountered while attempting to roll back the transaction.");
+                        }
+                    }
+                    Console.WriteLine("An exception of type " + e.GetType() +
+                    " was encountered while inserting the data.");
+                    Console.WriteLine("Neither record was written to database.");                    
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
         }    
     }
 }

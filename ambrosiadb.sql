@@ -10,6 +10,118 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
+-- Volcando estructura para tabla ambrosia.detafact
+CREATE TABLE IF NOT EXISTS `detafact` (
+  `FacturaId` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `Unidades` smallint(6) NOT NULL DEFAULT '0',
+  `Descripcion` varchar(100) COLLATE latin1_spanish_ci NOT NULL DEFAULT '',
+  `Precio` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `Impuesto` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `ImpEnFac` tinyint(4) NOT NULL DEFAULT '1',
+  `LoteId` bigint(20) NOT NULL DEFAULT '0',
+  KEY `FacturaId` (`FacturaId`),
+  KEY `LoteId` (`LoteId`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+
+-- Volcando datos para la tabla ambrosia.detafact: ~79 rows (aproximadamente)
+/*!40000 ALTER TABLE `detafact` DISABLE KEYS */;
+INSERT INTO `detafact` (`FacturaId`, `Unidades`, `Descripcion`, `Precio`, `Impuesto`, `ImpEnFac`, `LoteId`) VALUES
+	(3, 0, '', 0.00, 0.00, 1, 0),
+	(3, 0, '', 0.00, 0.00, 1, 0),
+	(3, 0, '', 0.00, 0.00, 1, 0),
+	(4, 4, '', 0.00, 0.00, 1, 0),
+	(4, 5, '', 0.00, 0.00, 1, 0),
+	(4, 6, '', 0.00, 0.00, 1, 0),
+	(6, 1, 'Menu del Dia', 0.00, 0.00, 1, 0),
+	(6, 1, 'Flan de la Casa', 0.00, 0.00, 1, 0),
+	(6, 1, 'Cafe con leche', 0.00, 0.00, 1, 0),
+	(8, 1, 'Menu del Dia', 10.00, 0.00, 1, 0),
+	(8, 1, 'Flan de la Casa', 3.00, 0.00, 1, 0),
+	(10, 1, 'Menu del Dia', 10.00, 7.00, 1, 0),
+	(10, 1, 'Flan de la Casa', 3.00, 10.00, 1, 0),
+	(10, 1, 'Cafe con leche', 2.00, 10.00, 1, 0),
+	(11, 1, 'Menu del Dia', 10.00, 7.00, 0, 0),
+	(11, 1, 'Primeros Menus', 0.00, 0.00, 0, 0),
+	(11, 1, 'Segundos Menus', 0.00, 0.00, 0, 0),
+	(12, 1, 'Menu del Dia', 10.00, 7.00, 1, 0),
+	(12, 1, 'Primeros Menus', 0.00, 0.00, 0, 0),
+	(12, 1, 'Segundos Menus', 0.00, 0.00, 1, 0),
+	(14, 1, 'Menu del Dia', 10.00, 7.00, 1, 24),
+	(14, 1, 'Primeros Menus', 0.00, 0.00, 0, 24),
+	(14, 1, 'Segundos Menus', 0.00, 0.00, 1, 24),
+	(14, 1, 'Pollo Asado', 0.00, 0.00, 0, 24),
+	(15, 1, 'Menu del Dia', 10.00, 7.00, 1, 25),
+	(16, 1, 'Menu del Dia', 10.00, 7.00, 1, 28),
+	(17, 1, 'Menu del Dia', 10.00, 7.00, 1, 29),
+	(18, 1, 'Menu del Dia', 10.00, 7.00, 1, 34),
+	(19, 1, 'Menu del Dia', 10.00, 7.00, 1, 35),
+	(20, 1, 'Menu del Dia', 10.00, 7.00, 1, 36),
+	(21, 1, 'Menu del Dia', 10.00, 7.00, 1, 37),
+	(22, 1, 'Menu del Dia', 10.00, 7.00, 1, 38),
+	(22, 1, 'Menu del Dia', 10.00, 7.00, 1, 40),
+	(1, 2, 'Flan de la Casa', 3.00, 10.00, 1, 42),
+	(1, 2, 'Flan de la Casa', 3.00, 10.00, 1, 42),
+	(1, 2, 'Flan de la Casa', 3.00, 10.00, 1, 42),
+	(23, 1, 'Cafe con leche', 2.00, 10.00, 1, 44),
+	(23, 1, 'Cafe con leche', 2.00, 10.00, 1, 44),
+	(23, 1, 'Canna ', 1.00, 10.00, 1, 45),
+	(23, 1, 'Gyn tonyc', 3.00, 10.00, 1, 45),
+	(23, 1, 'Bt San Miguel', 2.00, 10.00, 1, 45),
+	(24, 1, 'Chuletas Cerdo', 12.00, 10.00, 1, 46),
+	(24, 1, 'Chuletas Cerdo', 12.00, 10.00, 1, 46),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 47),
+	(6, 1, 'Flan de la Casa', 3.00, 10.00, 1, 47),
+	(6, 1, 'Flan de la Casa', 3.00, 10.00, 1, 48),
+	(6, 1, 'Extra Nata', 0.00, 10.00, 0, 48),
+	(6, 1, 'Flan de la Casa', 3.00, 10.00, 1, 49),
+	(6, 1, 'Extra Nata', 0.00, 10.00, 0, 49),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 49),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 50),
+	(6, 1, 'Primeros Menus', 0.00, 0.00, 0, 50),
+	(6, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 50),
+	(25, 1, 'Menu del Dia', 10.00, 7.00, 1, 51),
+	(25, 1, 'Primeros Menus', 0.00, 0.00, 0, 51),
+	(25, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 51),
+	(25, 1, 'Segundos Menus', 0.00, 0.00, 1, 51),
+	(25, 1, 'Calamares', 8.00, 10.00, 1, 51),
+	(25, 1, 'Helado triple sabor', 2.00, 10.00, 1, 51),
+	(25, 1, 'Birutas de almendra', 0.00, 0.00, 0, 51),
+	(25, 1, 'Bt San Miguel', 2.00, 10.00, 1, 51),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 52),
+	(6, 1, 'Primeros Menus', 0.00, 0.00, 0, 52),
+	(6, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 52),
+	(6, 1, 'Flan de la Casa', 3.00, 10.00, 1, 52),
+	(6, 1, 'Helado triple sabor', 2.00, 10.00, 1, 52),
+	(6, 1, 'Birutas de almendra', 0.00, 0.00, 0, 52),
+	(6, 1, 'Chuletas Cerdo', 12.00, 10.00, 1, 52),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 52),
+	(6, 1, 'Primeros Menus', 0.00, 0.00, 0, 52),
+	(6, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 52),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 53),
+	(6, 1, 'Primeros Menus', 0.00, 0.00, 0, 53),
+	(6, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 53),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 53),
+	(6, 1, 'Flan de la Casa', 3.00, 10.00, 1, 53),
+	(6, 1, 'Extra Nata', 0.00, 10.00, 0, 53),
+	(6, 1, 'Cafe con leche', 2.00, 10.00, 1, 53),
+	(6, 1, 'Taza', 0.00, 0.00, 0, 53),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54),
+	(6, 1, 'Menu del Dia', 10.00, 7.00, 1, 54);
+/*!40000 ALTER TABLE `detafact` ENABLE KEYS */;
+
+
 -- Volcando estructura para tabla ambrosia.elementos
 CREATE TABLE IF NOT EXISTS `elementos` (
   `ElementoId` int(11) NOT NULL AUTO_INCREMENT,
@@ -43,7 +155,7 @@ INSERT INTO `elementos` (`ElementoId`, `PadreId`, `CompanyId`, `Descripcion`, `P
 	(6412, 6411, 4, 'Ensalada Mixta', 0.00, 0.00, 0, 1, '#000000', '#f57e11', 1, 1, 'C:\\AmbrosiaClient\\Img\\ensaladamixta.jpg', 1),
 	(6413, 6411, 4, 'Sopa de Verduras', 0.00, 0.00, 0, 1, '#000000', '#ed7c13', 1, 1, 'C:\\AmbrosiaClient\\Img\\sopaverduras.jpg', 1),
 	(6415, 6411, 4, 'Crema de Tomate', 0.00, 0.00, 0, 1, '#000000', '#ed7c13', 1, 1, 'C:\\AmbrosiaClient\\Img\\sopatomate.jpg', 1),
-	(6416, 2194, 4, 'Segundos Menus', 0.00, 0.00, 0, 1, '#000000', '#ed7c13', 1, 1, 'C:\\AmbrosiaClient\\Img\\segundos.jpg', 1),
+	(6416, 2194, 4, 'Segundos Menus', 0.00, 0.00, 1, 1, '#000000', '#ed7c13', 1, 1, 'C:\\AmbrosiaClient\\Img\\segundos.jpg', 1),
 	(6417, 6411, 4, 'Crema de Champiñon', 0.00, 0.00, 0, 1, '#000000', '#eb9310', 1, 1, 'C:\\AmbrosiaClient\\Img\\sopachampi.jpg', 1),
 	(6418, 0, 4, 'Vinos', 0.00, 0.00, 0, 0, '#000000', '#e81548', 0, 0, 'C:\\AmbrosiaClient\\Img\\vinos.png', 0),
 	(6420, 2214, 4, 'Chuletas Cerdo', 12.00, 10.00, 1, 1, '#000000', '#e6177a', 1, 1, 'C:\\AmbrosiaClient\\Img\\chuletacerdo.png', 1),
@@ -99,20 +211,71 @@ INSERT INTO `empleados` (`EmpleadoId`, `NombreEmpleado`, `ClaveEmpleado`, `Compa
 /*!40000 ALTER TABLE `empleados` ENABLE KEYS */;
 
 
+-- Volcando estructura para tabla ambrosia.facturas
+CREATE TABLE IF NOT EXISTS `facturas` (
+  `FacturaId` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `Sesion` tinyint(3) unsigned NOT NULL DEFAULT '1',
+  `Estado` varchar(1) COLLATE latin1_spanish_ci NOT NULL DEFAULT 'A',
+  `Nombre` varchar(5) COLLATE latin1_spanish_ci NOT NULL DEFAULT '',
+  `Total` decimal(10,0) NOT NULL DEFAULT '0',
+  `Cantidad` decimal(10,0) NOT NULL DEFAULT '0',
+  `Cambio` decimal(10,0) NOT NULL DEFAULT '0',
+  `FechaHora` datetime DEFAULT NULL,
+  PRIMARY KEY (`FacturaId`),
+  KEY `Sesion` (`Sesion`),
+  KEY `Estado` (`Estado`),
+  KEY `Nombre` (`Nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+
+-- Volcando datos para la tabla ambrosia.facturas: ~21 rows (aproximadamente)
+/*!40000 ALTER TABLE `facturas` DISABLE KEYS */;
+INSERT INTO `facturas` (`FacturaId`, `Sesion`, `Estado`, `Nombre`, `Total`, `Cantidad`, `Cambio`, `FechaHora`) VALUES
+	(1, 1, 'A', '15', 0, 0, 0, NULL),
+	(2, 1, 'A', '888', 0, 0, 0, '2018-01-27 11:37:38'),
+	(3, 1, 'A', '44', 0, 0, 0, '2018-01-27 12:06:15'),
+	(4, 1, 'A', '41', 0, 0, 0, '2018-01-27 12:21:19'),
+	(6, 1, 'A', '5', 0, 0, 0, '2018-01-27 12:29:30'),
+	(8, 1, 'A', '55', 0, 0, 0, '2018-01-27 12:55:02'),
+	(10, 1, 'A', '55', 0, 0, 0, '2018-01-27 13:04:08'),
+	(11, 1, 'A', '4', 0, 0, 0, '2018-01-27 19:05:52'),
+	(12, 1, 'A', '5', 0, 0, 0, '2018-01-27 19:16:32'),
+	(14, 1, 'A', '5', 0, 0, 0, '2018-01-27 19:32:21'),
+	(15, 1, 'A', '5', 0, 0, 0, '2018-01-28 11:11:46'),
+	(16, 1, 'A', '5', 0, 0, 0, '2018-01-28 11:37:10'),
+	(17, 1, 'A', '5', 0, 0, 0, '2018-01-28 11:44:45'),
+	(18, 1, 'A', '5', 0, 0, 0, '2018-01-28 12:53:18'),
+	(19, 1, 'A', '5', 0, 0, 0, '2018-01-28 13:01:02'),
+	(20, 1, 'A', '4125', 0, 0, 0, '2018-01-28 13:06:10'),
+	(21, 1, 'A', '5', 0, 0, 0, '2018-01-28 14:23:43'),
+	(22, 1, 'A', '12345', 0, 0, 0, '2018-01-28 14:25:14'),
+	(23, 1, 'A', '6', 0, 0, 0, '2018-01-28 17:36:35'),
+	(24, 1, 'A', '7', 0, 0, 0, '2018-01-28 17:40:03'),
+	(25, 1, 'A', '12', 0, 0, 0, '2018-01-28 20:11:00');
+/*!40000 ALTER TABLE `facturas` ENABLE KEYS */;
+
+
 -- Volcando estructura para tabla ambrosia.impresoraconfig
 CREATE TABLE IF NOT EXISTS `impresoraconfig` (
   `ElementoId` int(11) NOT NULL,
   `NombreImpresora` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Volcando datos para la tabla ambrosia.impresoraconfig: ~5 rows (aproximadamente)
+-- Volcando datos para la tabla ambrosia.impresoraconfig: ~10 rows (aproximadamente)
 /*!40000 ALTER TABLE `impresoraconfig` DISABLE KEYS */;
 INSERT INTO `impresoraconfig` (`ElementoId`, `NombreImpresora`) VALUES
 	(2194, 'Cocina'),
 	(2194, 'Cocina-Primeros'),
 	(2194, 'Cocina-Segundos'),
 	(6435, 'Cocina'),
-	(6408, 'Barra');
+	(6408, 'Barra'),
+	(6425, 'Barra'),
+	(6442, 'Espetos'),
+	(6449, 'Cocina'),
+	(6411, 'Cocina'),
+	(6412, 'Cocina'),
+	(6413, 'Cocina'),
+	(6415, 'Cocina'),
+	(6417, 'Cocina');
 /*!40000 ALTER TABLE `impresoraconfig` ENABLE KEYS */;
 
 
@@ -166,6 +329,59 @@ INSERT INTO `login` (`CompanyId`, `User`, `Pass`, `Email`, `NombreComercial`, `N
 	(94, 'CaspiYo', '1234', 'alonso@gmail.com', '', '', '', '', '', '', ''),
 	(104, 'SinImpresoras', '1234', 'alonso.caspi@gmail.com', '', '', '', '', '', '', '');
 /*!40000 ALTER TABLE `login` ENABLE KEYS */;
+
+
+-- Volcando estructura para tabla ambrosia.lotes
+CREATE TABLE IF NOT EXISTS `lotes` (
+  `LoteId` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `Momento` datetime DEFAULT NULL,
+  `NumeElem` smallint(6) NOT NULL DEFAULT '0',
+  `NombCuen` varchar(5) COLLATE latin1_spanish_ci NOT NULL DEFAULT '0',
+  `Sesion` tinyint(4) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`LoteId`),
+  KEY `Sesion` (`Sesion`)
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+
+-- Volcando datos para la tabla ambrosia.lotes: ~35 rows (aproximadamente)
+/*!40000 ALTER TABLE `lotes` DISABLE KEYS */;
+INSERT INTO `lotes` (`LoteId`, `Momento`, `NumeElem`, `NombCuen`, `Sesion`) VALUES
+	(2, '2018-01-26 20:56:54', 0, '0', 1),
+	(4, '2018-01-27 10:44:07', 2, '0', 1),
+	(5, '2018-01-27 10:50:18', 4, '55', 1),
+	(9, '2018-01-27 11:03:40', 1, '8', 1),
+	(10, '2018-01-27 11:21:31', 1, '89', 1),
+	(11, '2018-01-27 11:31:31', 1, '15', 1),
+	(12, '2018-01-27 11:37:38', 1, '888', 1),
+	(13, '2018-01-27 12:06:15', 3, '44', 1),
+	(14, '2018-01-27 12:21:19', 3, '41', 1),
+	(16, '2018-01-27 12:29:30', 3, '5', 1),
+	(18, '2018-01-27 12:55:02', 2, '55', 1),
+	(20, '2018-01-27 13:04:08', 3, '55', 1),
+	(21, '2018-01-27 19:05:52', 3, '4', 1),
+	(22, '2018-01-27 19:16:32', 3, '5', 1),
+	(24, '2018-01-27 19:32:21', 4, '5', 1),
+	(25, '2018-01-28 11:11:46', 1, '5', 1),
+	(28, '2018-01-28 11:37:10', 1, '5', 1),
+	(29, '2018-01-28 11:44:45', 1, '5', 1),
+	(34, '2018-01-28 12:53:18', 1, '5', 1),
+	(35, '2018-01-28 13:01:02', 1, '5', 1),
+	(36, '2018-01-28 13:06:10', 1, '4125', 1),
+	(37, '2018-01-28 14:23:43', 1, '5', 1),
+	(38, '2018-01-28 14:25:14', 1, '12345', 1),
+	(40, '2018-01-28 14:44:38', 1, '12345', 1),
+	(42, '2018-01-28 17:29:10', 3, '15', 1),
+	(44, '2018-01-28 17:36:35', 2, '6', 1),
+	(45, '2018-01-28 17:39:16', 3, '6', 1),
+	(46, '2018-01-28 17:40:03', 2, '7', 1),
+	(47, '2018-01-28 19:07:28', 2, '5', 1),
+	(48, '2018-01-28 19:36:24', 2, '5', 1),
+	(49, '2018-01-28 19:43:10', 3, '5', 1),
+	(50, '2018-01-28 19:53:20', 3, '5', 1),
+	(51, '2018-01-28 20:11:00', 8, '12', 1),
+	(52, '2018-01-29 12:16:21', 10, '5', 1),
+	(53, '2018-01-29 12:23:24', 8, '5', 1),
+	(54, '2018-01-29 12:58:45', 14, '5', 1);
+/*!40000 ALTER TABLE `lotes` ENABLE KEYS */;
 
 
 -- Volcando estructura para tabla ambrosia.terminalconfig

@@ -31,6 +31,8 @@ namespace AmbrosiaServer
         public int Final { get; set; }
         public decimal Precio { get; set; }
         public decimal Impuesto { get; set; }
+        public int ImprimirEnFactura { get; set; }
+        public int ImprimirEnComanda { get; set; }
     }
 
     public class GetElementsData
@@ -56,6 +58,11 @@ namespace AmbrosiaServer
         public int IdElemento { get; set; }
         public int Unids { get; set; }
         public string Descripcion { get; set; }
+        public decimal Precio { get; set; }
+        public decimal Impuesto { get; set; }
+        public int ImprimirEnFactura { get; set; }
+        public int ImprimirEnComanda { get; set; }
+        public int TabLevel { get; set; }
     }
 
     public class Envio
@@ -69,6 +76,7 @@ namespace AmbrosiaServer
     {
         public int Unids { get; set; }
         public string Descripcion { get; set; }
+        public int TabLevel { get; set; }
     }
 
     public class ImpresoraSalida

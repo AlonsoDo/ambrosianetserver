@@ -14,21 +14,20 @@ using System.Drawing.Printing;
 
 namespace AmbrosiaServer
 {    
-    
     class Program
     {
         public static Hashtable clientsList = new Hashtable();
         public static List<Impresoras> impresoras = new List<Impresoras>();
         public static List<Terminales> terminales = new List<Terminales>();
-        public static Envio PedidoEnviado = new Envio();        
+        public static Envio PedidoEnviado = new Envio();
+        public static PedidoCompleto pedidoCompleto = new PedidoCompleto();
         
         static void Main(string[] args)
         {
             IPAddress ip = IPAddress.Parse("192.168.1.2");            
             TcpListener serverSocket = new TcpListener(ip,10001);
             TcpClient clientSocket = default(TcpClient);
-            string ClientId = null;
-            
+            string ClientId = null;            
 
             string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
             MySqlConnection conn = new MySqlConnection(connectionString);
@@ -113,34 +112,7 @@ namespace AmbrosiaServer
                 handleClient client = new handleClient();
                 client.startClient(clientSocket, ClientId);
             }            
-        }
-
-        /*public static void broadcast(string msg, string ClientName, bool flag)
-        {
-            // Recorrer lista de clientes conectados
-            foreach (DictionaryEntry Item in clientsList)
-            {
-                TcpClient broadcastSocket;
-                broadcastSocket = (TcpClient)Item.Value;
-                NetworkStream broadcastStream = broadcastSocket.GetStream();
-                Byte[] broadcastBytes = null;
-
-                if (flag == true)
-                {
-                    // Mensaje normal
-                    broadcastBytes = Encoding.ASCII.GetBytes(ClientName + " says : " + msg);
-                }
-                else
-                {
-                    // Primer mensaje, contiene solo key cliente
-                    broadcastBytes = Encoding.ASCII.GetBytes(msg);
-                }
-
-                // Mandar mensaje a todos los clientes conectados
-                broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
-                broadcastStream.Flush();
-            }
-        }*/    
+        }           
 
         public class handleClient
         {
@@ -156,6 +128,8 @@ namespace AmbrosiaServer
                 this.clientSocket = inClientSocket;
                 this.ClientId = inClientId;                
                 SendElementsData(0);
+                SendTerminalesTer();
+                SendPrintersTer();                
                 this.ctThread = new Thread(SocketTrafic);
                 ctThread.Start();
             }
@@ -220,6 +194,110 @@ namespace AmbrosiaServer
                 
             }
 
+            public void SendPrintersTer()
+            {
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                    Console.WriteLine("Sending Printers list to client...");
+
+                    string nombreEvento = "SendPrintersBack";                    
+
+                    ListaImpresorasTer listaImpresorasTer = new ListaImpresorasTer();
+                    listaImpresorasTer.NombreEvento = nombreEvento;
+                    
+                    List<ImpresorasTer> impresorasTer = new List<ImpresorasTer>();
+
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT * FROM impresoras";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine(rdr[1]);
+
+                        impresorasTer.Add(new ImpresorasTer()
+                        {
+                            NombreImpresora = rdr.GetString(rdr.GetOrdinal("NombreImpresora"))
+                        });
+
+                    }
+                    rdr.Close();
+                    listaImpresorasTer.impresorasTer = impresorasTer;
+                    output = JsonConvert.SerializeObject(listaImpresorasTer);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+                Console.WriteLine("Done.");
+
+            }
+
+            public void SendTerminalesTer()
+            {
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                    Console.WriteLine("Sending Terminales list to client...");
+
+                    string nombreEvento = "SendTerminalesBack";
+
+                    ListaTerminalesTer listaTerminalesTer = new ListaTerminalesTer();
+                    listaTerminalesTer.NombreEvento = nombreEvento;
+
+                    List<TerminalesTer> terminalesTer = new List<TerminalesTer>();
+
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT * FROM terminales";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine(rdr[1]);
+
+                        terminalesTer.Add(new TerminalesTer()
+                        {
+                            NombreTerminal = rdr.GetString(rdr.GetOrdinal("NombreTerminal"))
+                        });
+
+                    }
+                    rdr.Close();
+                    listaTerminalesTer.terminalesTer = terminalesTer;
+                    output = JsonConvert.SerializeObject(listaTerminalesTer);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+                Console.WriteLine("Done.");
+
+            }
+
             private void SocketTrafic()
             {
                 byte[] bytesFrom = new byte[262144];
@@ -254,7 +332,6 @@ namespace AmbrosiaServer
                             EventoAskForElements eventoAskForElements = new EventoAskForElements();
                             eventoAskForElements = JsonConvert.DeserializeObject<EventoAskForElements>(dataFromClient);
                             Console.WriteLine("PadreId:" + eventoAskForElements.PadreId);
-                            //Thread.Sleep(2000);
                             SendElementsData(eventoAskForElements.PadreId);
                         }
                         else if (EventosControl.NombreEvento == "EnvioPedido")
@@ -263,10 +340,24 @@ namespace AmbrosiaServer
                             Sended = JsonConvert.DeserializeObject<Envio>(dataFromClient);
                             Console.WriteLine("Envio de la cuenta: " + Sended.NumeCuen);
                             PedidoEnviado = Sended;
+                            
                             //Grabar datos aqui
                             GuardarPedido();
+
                             SendToPrinters(Sended.NumeCuen);
-                            SendToTerminals();
+                            SendToTerminals(Sended.NumeCuen);
+                            
+                            //Devolver pedido completo desglosado para terminales
+                            pedidoCompleto.NombreCuenta = Sended.NumeCuen;
+                            pedidoCompleto.NombreEvento = "PedidoDesglosadoBack";
+
+                            //Send
+                            PedidoDesglosadoBack();                            
+
+                            //Reset
+                            pedidoCompleto.NombreCuenta = string.Empty;
+                            pedidoCompleto.impresoraSalida.Clear();
+                            pedidoCompleto.terminalSalida.Clear();
                         }
                     }
                     catch (Exception ex)
@@ -279,6 +370,27 @@ namespace AmbrosiaServer
                 return;            
             }
 
+            public void PedidoDesglosadoBack()
+            {
+                // Recorrer lista de clientes conectados
+                foreach (DictionaryEntry Item in clientsList)
+                {
+                    TcpClient broadcastSocket;
+                    broadcastSocket = (TcpClient)Item.Value;
+                    NetworkStream broadcastStream = broadcastSocket.GetStream();
+                    Byte[] broadcastBytes = null;
+
+                    string output = null;
+                    output = JsonConvert.SerializeObject(pedidoCompleto);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                
+                    // Mandar mensaje a todos los clientes conectados
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+            }
+            
             public void SendToPrinters(string NumeCuen)
             {
                 //List<ImpresoraSalida> impresoraSalida = new List<ImpresoraSalida>();
@@ -350,8 +462,9 @@ namespace AmbrosiaServer
                             }
                         }
                     }                    
-                }
-                ImprimirPedido(NumeCuen);
+                }                
+                pedidoCompleto.impresoraSalida = impresoraSalida;
+                ImprimirPedido(NumeCuen);                
             }
 
             public void ImprimirPedido(string NumeCuen)
@@ -366,7 +479,7 @@ namespace AmbrosiaServer
                     pd.PrintPage += (sender, args) => pd_ImprimirEnvio(NumeCuen, args.Graphics);
                     
                     //Set PrinterName name
-                    pd.PrinterSettings.PrinterName = impresoraSalida[IndexImpresora].NombreImpresora;
+                    pd.PrinterSettings.PrinterName = "Cocina"; //impresoraSalida[IndexImpresora].NombreImpresora;
 
                     int rows = impresoraSalida[IndexImpresora].dataLinea.Count;
                     
@@ -375,12 +488,11 @@ namespace AmbrosiaServer
                     //Print the document
                     pd.Print();
 
-                    pd.Dispose();
-                    
+                    pd.Dispose();                    
                 }
 
                 //Reset
-                impresoraSalida.Clear();
+                //impresoraSalida.Clear();
             }
 
             //The PrintPage event handler 
@@ -419,7 +531,7 @@ namespace AmbrosiaServer
                 }            
             }
 
-            public void SendToTerminals()
+            public void SendToTerminals(string NumeCuen)
             {
                 List<TerminalSalida> terminalSalida = new List<TerminalSalida>();
                 SalidaPedido salidaPedido = new SalidaPedido();
@@ -488,6 +600,7 @@ namespace AmbrosiaServer
                         }
                     }                    
                 }
+                pedidoCompleto.terminalSalida = terminalSalida;
             }
 
             public void GuardarPedido()
@@ -538,10 +651,11 @@ namespace AmbrosiaServer
                     {                        
                         Command = Command + "(" + LastFactId + "," + PedidoEnviado.dataLinea[i].Unids + ",'"
                             + PedidoEnviado.dataLinea[i].Descripcion + "','" + PedidoEnviado.dataLinea[i].Precio + "','"
-                            + PedidoEnviado.dataLinea[i].Impuesto + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + "," + LastLoteId + "),";
+                            + PedidoEnviado.dataLinea[i].Impuesto + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + ","
+                            + LastLoteId + "," + PedidoEnviado.dataLinea[i].TabLevel + "),";
                     }
                     Command = Command.TrimEnd(',');
-                    MyCommand.CommandText = "INSERT INTO detafact(FacturaId,Unidades,Descripcion,Precio,Impuesto,ImpEnFac,LoteId) VALUES " + Command;
+                    MyCommand.CommandText = "INSERT INTO detafact(FacturaId,Unidades,Descripcion,Precio,Impuesto,ImpEnFac,LoteId,TabLevel) VALUES " + Command;
                     MyCommand.ExecuteNonQuery();
                     MyTransaction.Commit();
                 }

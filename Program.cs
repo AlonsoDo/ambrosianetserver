@@ -126,10 +126,12 @@ namespace AmbrosiaServer
             public void startClient(TcpClient inClientSocket, string inClientId)
             {
                 this.clientSocket = inClientSocket;
-                this.ClientId = inClientId;                
-                SendElementsData(0);
+                this.ClientId = inClientId;
+                //this.clientSocket.NoDelay = true;
                 SendTerminalesTer();
-                SendPrintersTer();                
+                SendPrintersTer();
+                Thread.Sleep(2000);
+                SendElementsData(0);
                 this.ctThread = new Thread(SocketTrafic);
                 ctThread.Start();
             }
@@ -229,6 +231,14 @@ namespace AmbrosiaServer
                         });
 
                     }
+                    impresorasTer.Add(new ImpresorasTer()
+                    {
+                        NombreImpresora = "Todas"
+                    });
+                    impresorasTer.Add(new ImpresorasTer()
+                    {
+                        NombreImpresora = "Ninguna"
+                    });
                     rdr.Close();
                     listaImpresorasTer.impresorasTer = impresorasTer;
                     output = JsonConvert.SerializeObject(listaImpresorasTer);
@@ -281,6 +291,14 @@ namespace AmbrosiaServer
                         });
 
                     }
+                    terminalesTer.Add(new TerminalesTer()
+                    {
+                        NombreTerminal = "Todas"
+                    });
+                    terminalesTer.Add(new TerminalesTer()
+                    {
+                        NombreTerminal = "Ninguna"
+                    });
                     rdr.Close();
                     listaTerminalesTer.terminalesTer = terminalesTer;
                     output = JsonConvert.SerializeObject(listaTerminalesTer);
@@ -336,19 +354,18 @@ namespace AmbrosiaServer
                         }
                         else if (EventosControl.NombreEvento == "EnvioPedido")
                         {
-                            Envio Sended = new Envio();
-                            Sended = JsonConvert.DeserializeObject<Envio>(dataFromClient);
-                            Console.WriteLine("Envio de la cuenta: " + Sended.NumeCuen);
-                            PedidoEnviado = Sended;
+                            //Envio Sended = new Envio();
+                            PedidoEnviado = JsonConvert.DeserializeObject<Envio>(dataFromClient);
+                            Console.WriteLine("Envio de la cuenta: " + PedidoEnviado.NumeCuen);
                             
                             //Grabar datos aqui
                             GuardarPedido();
 
-                            SendToPrinters(Sended.NumeCuen);
-                            SendToTerminals(Sended.NumeCuen);
+                            SendToPrinters(PedidoEnviado.NumeCuen);
+                            SendToTerminals(PedidoEnviado.NumeCuen);
                             
                             //Devolver pedido completo desglosado para terminales
-                            pedidoCompleto.NombreCuenta = Sended.NumeCuen;
+                            pedidoCompleto.NombreCuenta = PedidoEnviado.NumeCuen;
                             pedidoCompleto.NombreEvento = "PedidoDesglosadoBack";
 
                             //Send
@@ -464,7 +481,7 @@ namespace AmbrosiaServer
                     }                    
                 }                
                 pedidoCompleto.impresoraSalida = impresoraSalida;
-                ImprimirPedido(NumeCuen);                
+                //ImprimirPedido(NumeCuen);                
             }
 
             public void ImprimirPedido(string NumeCuen)

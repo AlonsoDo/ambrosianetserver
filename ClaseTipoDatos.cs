@@ -120,4 +120,11 @@ namespace AmbrosiaServer
         public string NombreEvento { get; set; }
         public List<TerminalesTer> terminalesTer { get; set; }
     }
+
+    public class ImpresorasTerminales
+    {
+        public string NombreEvento { get; set; }
+        public List<ImpresorasTer> impresorasTer { get; set; }
+        public List<TerminalesTer> terminalesTer { get; set; }
+    }
 }

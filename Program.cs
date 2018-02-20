@@ -21,6 +21,7 @@ namespace AmbrosiaServer
         public static List<Terminales> terminales = new List<Terminales>();
         public static Envio PedidoEnviado = new Envio();
         public static PedidoCompleto pedidoCompleto = new PedidoCompleto();
+        public static ImpresorasTerminales impresorasTerminales = new ImpresorasTerminales();
         
         static void Main(string[] args)
         {
@@ -126,11 +127,9 @@ namespace AmbrosiaServer
             public void startClient(TcpClient inClientSocket, string inClientId)
             {
                 this.clientSocket = inClientSocket;
-                this.ClientId = inClientId;
-                //this.clientSocket.NoDelay = true;
-                SendTerminalesTer();
-                SendPrintersTer();
-                Thread.Sleep(2000);
+                this.ClientId = inClientId;                
+                SendImpresorasTerminales();
+                Thread.Sleep(1000);                
                 SendElementsData(0);
                 this.ctThread = new Thread(SocketTrafic);
                 ctThread.Start();
@@ -198,21 +197,11 @@ namespace AmbrosiaServer
 
             public void SendPrintersTer()
             {
-                TcpClient broadcastSocket;
-                broadcastSocket = this.clientSocket;
-                NetworkStream broadcastStream = broadcastSocket.GetStream();
-                Byte[] broadcastBytes = null;
-                string output = null;
                 string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
                 MySqlConnection conn = new MySqlConnection(connectionString);
                 try
                 {
-                    Console.WriteLine("Sending Printers list to client...");
-
-                    string nombreEvento = "SendPrintersBack";                    
-
-                    ListaImpresorasTer listaImpresorasTer = new ListaImpresorasTer();
-                    listaImpresorasTer.NombreEvento = nombreEvento;
+                    Console.WriteLine("Sending Printers list to client...");                    
                     
                     List<ImpresorasTer> impresorasTer = new List<ImpresorasTer>();
 
@@ -240,12 +229,8 @@ namespace AmbrosiaServer
                         NombreImpresora = "Ninguna"
                     });
                     rdr.Close();
-                    listaImpresorasTer.impresorasTer = impresorasTer;
-                    output = JsonConvert.SerializeObject(listaImpresorasTer);
-                    Console.WriteLine(output);
-                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
-                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
-                    broadcastStream.Flush();
+                    
+                    impresorasTerminales.impresorasTer = impresorasTer;
                 }
                 catch (Exception ex)
                 {
@@ -258,21 +243,11 @@ namespace AmbrosiaServer
 
             public void SendTerminalesTer()
             {
-                TcpClient broadcastSocket;
-                broadcastSocket = this.clientSocket;
-                NetworkStream broadcastStream = broadcastSocket.GetStream();
-                Byte[] broadcastBytes = null;
-                string output = null;
                 string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
                 MySqlConnection conn = new MySqlConnection(connectionString);
                 try
                 {
-                    Console.WriteLine("Sending Terminales list to client...");
-
-                    string nombreEvento = "SendTerminalesBack";
-
-                    ListaTerminalesTer listaTerminalesTer = new ListaTerminalesTer();
-                    listaTerminalesTer.NombreEvento = nombreEvento;
+                    Console.WriteLine("Sending Terminales list to client...");                    
 
                     List<TerminalesTer> terminalesTer = new List<TerminalesTer>();
 
@@ -300,12 +275,8 @@ namespace AmbrosiaServer
                         NombreTerminal = "Ninguna"
                     });
                     rdr.Close();
-                    listaTerminalesTer.terminalesTer = terminalesTer;
-                    output = JsonConvert.SerializeObject(listaTerminalesTer);
-                    Console.WriteLine(output);
-                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
-                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
-                    broadcastStream.Flush();
+                    
+                    impresorasTerminales.terminalesTer = terminalesTer;
                 }
                 catch (Exception ex)
                 {
@@ -314,6 +285,25 @@ namespace AmbrosiaServer
                 conn.Close();
                 Console.WriteLine("Done.");
 
+            }
+
+            public void SendImpresorasTerminales()
+            {
+                SendPrintersTer();
+                SendTerminalesTer();
+
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+
+                impresorasTerminales.NombreEvento = "ImpresorasTerminalesBak";
+                output = JsonConvert.SerializeObject(impresorasTerminales);
+                Console.WriteLine(output);
+                broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                broadcastStream.Flush();
             }
 
             private void SocketTrafic()
@@ -430,8 +420,10 @@ namespace AmbrosiaServer
                             {
                                 SalidaPedido Linea = new SalidaPedido();
                                 Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
-                                Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                //Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
                                 Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
+                                Linea.Descripcion = new String('-', 3 * (Linea.TabLevel - 1)) + PedidoEnviado.dataLinea[i].Descripcion;
+                                
                                 List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                 dataLineas.Add(Linea);
 
@@ -453,8 +445,9 @@ namespace AmbrosiaServer
                                         impresoraSalida[k].dataLinea.Add(new SalidaPedido()
                                         {
                                             Unids = PedidoEnviado.dataLinea[i].Unids,
-                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion,
-                                            TabLevel = PedidoEnviado.dataLinea[i].TabLevel
+                                            //Descripcion = PedidoEnviado.dataLinea[i].Descripcion,
+                                            TabLevel = PedidoEnviado.dataLinea[i].TabLevel,
+                                            Descripcion = new String('-', 3 * (PedidoEnviado.dataLinea[i].TabLevel - 1)) + PedidoEnviado.dataLinea[i].Descripcion                                
                                         });
                                         Found = true;
                                         break;
@@ -465,8 +458,9 @@ namespace AmbrosiaServer
                                     // Impresora nueva y linea al detalle
                                     SalidaPedido Linea = new SalidaPedido();
                                     Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
-                                    Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    //Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
                                     Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
+                                    Linea.Descripcion = new String('-', 3 * (Linea.TabLevel - 1)) + PedidoEnviado.dataLinea[i].Descripcion;
                                     List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                     dataLineas.Add(Linea);
 
@@ -543,7 +537,7 @@ namespace AmbrosiaServer
                     int TabLavel = salidaPedido[i].TabLevel;
                     string TabSpace = new String(' ', (TabLavel-1) * 3);
                     //Draw 
-                    g.DrawString(TabSpace + cUnids + " " + salidaPedido[i].Descripcion, font, brush, new Rectangle(0, y, 400, 28));
+                    g.DrawString(cUnids + " " + salidaPedido[i].Descripcion, font, brush, new Rectangle(0, y, 400, 28));
                     y = y + 28;
                 }            
             }
@@ -570,7 +564,10 @@ namespace AmbrosiaServer
                             {
                                 SalidaPedido Linea = new SalidaPedido();
                                 Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
-                                Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                //Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
+                                Linea.Descripcion = new String('-', 3 * (Linea.TabLevel - 1)) + PedidoEnviado.dataLinea[i].Descripcion;
+                                
                                 List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                 dataLineas.Add(Linea);
 
@@ -592,7 +589,9 @@ namespace AmbrosiaServer
                                         terminalSalida[k].dataLinea.Add(new SalidaPedido()
                                         {
                                             Unids = PedidoEnviado.dataLinea[i].Unids,
-                                            Descripcion = PedidoEnviado.dataLinea[i].Descripcion
+                                            //Descripcion = PedidoEnviado.dataLinea[i].Descripcion
+                                            TabLevel = PedidoEnviado.dataLinea[i].TabLevel,
+                                            Descripcion = new String('-', 3 * (PedidoEnviado.dataLinea[i].TabLevel - 1)) + PedidoEnviado.dataLinea[i].Descripcion                                         
                                         });
                                         Found = true;
                                         break;
@@ -603,7 +602,10 @@ namespace AmbrosiaServer
                                     // Terminal nueva y linea al detalle
                                     SalidaPedido Linea = new SalidaPedido();
                                     Linea.Unids = PedidoEnviado.dataLinea[i].Unids;
-                                    Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    //Linea.Descripcion = PedidoEnviado.dataLinea[i].Descripcion;
+                                    Linea.TabLevel = PedidoEnviado.dataLinea[i].TabLevel;
+                                    Linea.Descripcion = new String('-', 3 * (Linea.TabLevel -1 )) + PedidoEnviado.dataLinea[i].Descripcion;
+                                
                                     List<SalidaPedido> dataLineas = new List<SalidaPedido>();
                                     dataLineas.Add(Linea);
 

@@ -25,7 +25,7 @@ namespace AmbrosiaServer
         
         static void Main(string[] args)
         {
-            IPAddress ip = IPAddress.Parse("192.168.1.2");  // My computer fixed ip          
+            IPAddress ip = IPAddress.Parse("192.168.1.2");  // Localhost of my machine          
             TcpListener serverSocket = new TcpListener(ip,10001);
             TcpClient clientSocket = default(TcpClient);
             string ClientId = null;            

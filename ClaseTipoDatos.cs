@@ -127,4 +127,27 @@ namespace AmbrosiaServer
         public List<ImpresorasTer> impresorasTer { get; set; }
         public List<TerminalesTer> terminalesTer { get; set; }
     }
+
+    public class EventoCargarPedidosDesde
+    {
+        public string NombreEvento { get; set; }
+        public int IndexDesde { get; set; }
+    }
+
+    public class CargarDetallePedidos
+    {
+        public string NombreEvento { get; set; }
+        public List<DetallePedidos> detallePedidos { get; set; }
+    }
+
+    public class DetallePedidos
+    {
+        public int LoteId { get; set; }
+        public DateTime Momento { get; set; }
+        public string NombCuen { get; set; }
+        public int Unidades { get; set; }
+        public string Descripcion { get; set; }
+        public int TabLevel { get; set; }
+    }
+
 }

@@ -129,7 +129,7 @@ namespace AmbrosiaServer
                 this.clientSocket = inClientSocket;
                 this.ClientId = inClientId;                
                 SendImpresorasTerminales();
-                Thread.Sleep(1000);                
+                //Thread.Sleep(1000);                
                 SendElementsData(0);
                 this.ctThread = new Thread(SocketTrafic);
                 ctThread.Start();
@@ -366,6 +366,12 @@ namespace AmbrosiaServer
                             pedidoCompleto.impresoraSalida.Clear();
                             pedidoCompleto.terminalSalida.Clear();
                         }
+                        else if (EventosControl.NombreEvento == "CargarPedidosDesde")
+                        {
+                            EventoCargarPedidosDesde pedidos = JsonConvert.DeserializeObject<EventoCargarPedidosDesde>(dataFromClient);
+                            Console.WriteLine("Cargar Pedidos desde:" + pedidos.IndexDesde);
+                            CargarPedidosDesde(pedidos.IndexDesde);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -375,6 +381,57 @@ namespace AmbrosiaServer
 
                 ctThread.Abort();
                 return;            
+            }
+
+            public void CargarPedidosDesde(int IndexDesde)
+            {
+                List<DetallePedidos> detallePedidos = new List<DetallePedidos>();
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT lotes.LoteId as 'LoteId', lotes.Momento as 'Momento', lotes.NombCuen as 'NombCuen', detafact.Unidades as 'Unidades', detafact.Descripcion as 'Descripcion', detafact.TabLevel as 'TabLevel' FROM lotes JOIN detafact on lotes.LoteId=detafact.LoteId WHERE lotes.LoteId >= " + IndexDesde;
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine(rdr[0] + " -- " + rdr[1]);
+                        detallePedidos.Add(new DetallePedidos()
+                        {
+                            LoteId = rdr.GetInt32(0),
+                            Momento = rdr.GetDateTime(1),
+                            NombCuen = rdr.GetString(rdr.GetOrdinal("NombCuen")),
+                            Unidades = rdr.GetInt32(3),
+                            TabLevel = rdr.GetInt32(5),
+                            Descripcion = new String('-', 3 * (rdr.GetInt32(5) - 1)) + rdr.GetString(rdr.GetOrdinal("Descripcion"))
+                        });
+                    }
+                    rdr.Close();
+                    CargarDetallePedidos cargarDetallePedidos = new CargarDetallePedidos();
+                    cargarDetallePedidos.NombreEvento = "CargarPedidosDesdeBack";
+                    cargarDetallePedidos.detallePedidos = detallePedidos;
+                    
+                    // Send
+                    TcpClient broadcastSocket;
+                    broadcastSocket = this.clientSocket;
+                    NetworkStream broadcastStream = broadcastSocket.GetStream();
+                    Byte[] broadcastBytes = null;
+                    string output = null;
+                    output = JsonConvert.SerializeObject(cargarDetallePedidos);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+                Console.WriteLine("Done.");
             }
 
             public void PedidoDesglosadoBack()

@@ -1,0 +1,2 @@
+SELECT lotes.LoteId as `LoteId`, lotes.Momento as `Momento`, lotes.NombCuen as `NombCuen`, detafact.Unidades as `Unidades`, detafact.Descripcion as `Descripcion`, detafact.TabLevel as `TabLevel` 
+FROM lotes JOIN detafact on lotes.LoteId=detafact.LoteId WHERE lotes.LoteId >= 200

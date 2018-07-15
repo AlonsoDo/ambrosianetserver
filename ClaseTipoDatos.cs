@@ -150,4 +150,41 @@ namespace AmbrosiaServer
         public int TabLevel { get; set; }
     }
 
+    public class Cliente
+    {
+        public int ClienteId { get; set; }
+        public string NombreComercial { get; set; }
+        public string NombreFiscal { get; set; }
+        public string Direccion { get; set; }
+        public string NIF { get; set; }
+        public string Mobil { get; set; }
+        public string Fijo { get; set; }
+    }
+
+    public class SalvarCliente
+    {
+        public string NombreEvento { get; set; }
+        public Cliente cliente { get; set; }
+    }
+
+    public class ClienteIdBak
+    {
+        public string NombreEvento { get; set; }
+        public int clienteId { get; set; }
+    }
+
+    public class ComoBuscarCliente
+    {
+        public string NombreEvento { get; set; }
+        public string Orden { get; set; }
+        public string CadenaBusqueda { get; set; }
+        public int Index { get; set; }
+    }
+
+    public class BuscarClienteBak
+    {
+        public string NombreEvento { get; set; }
+        public List<Cliente> listaClientes { get; set; }
+    }
+
 }

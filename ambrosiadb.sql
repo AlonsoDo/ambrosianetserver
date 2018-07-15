@@ -10,6 +10,36 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
+-- Volcando estructura para tabla ambrosia.clientes
+CREATE TABLE IF NOT EXISTS `clientes` (
+  `ClienteId` int(11) NOT NULL AUTO_INCREMENT,
+  `NombreComercial` varchar(100) COLLATE latin1_spanish_ci DEFAULT NULL,
+  `NombreFiscal` varchar(100) COLLATE latin1_spanish_ci DEFAULT NULL,
+  `Direccion` varchar(200) COLLATE latin1_spanish_ci DEFAULT NULL,
+  `NIF` varchar(10) COLLATE latin1_spanish_ci DEFAULT NULL,
+  `Mobil` varchar(15) COLLATE latin1_spanish_ci DEFAULT NULL,
+  `Fijo` varchar(15) COLLATE latin1_spanish_ci DEFAULT NULL,
+  PRIMARY KEY (`ClienteId`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+
+-- Volcando datos para la tabla ambrosia.clientes: ~12 rows (aproximadamente)
+/*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
+INSERT INTO `clientes` (`ClienteId`, `NombreComercial`, `NombreFiscal`, `Direccion`, `NIF`, `Mobil`, `Fijo`) VALUES
+	(1, 'Comercial 1', 'Fiscal 1', 'Direccion 1', '27382345V', '608978675', '952465432'),
+	(2, 'Comercial 2', 'Fiscal 2', 'Direccion 2', '27382345K', '608978675', '952465432'),
+	(3, 'Cliente3', 'Cliente 3', 'Direccion 3', '27635543S', '609987654', '952465869'),
+	(4, 'Cliente 4', 'cliente 4', 'Direccion 4', '27123123R', '607857463', '951234567'),
+	(5, 'Cliente 5', 'Cliente 5', 'Direccion 5', '26345678U', '609987654', '952345678'),
+	(6, 'Cliente 6', 'Cliente 6', 'Direccion 6', '27345678H', '608362514', '952345345'),
+	(7, 'Cliente 7', 'Cliente 7', 'Direccion 7', '27345543N', '609876543', '952473625'),
+	(8, 'Cliente 8', 'Cliente 8', 'Direccion 8', '27165432H', '608987654', '952364758'),
+	(9, 'Cliente 9', 'Zliente 9', 'Direccion 9', '27765432-L', '607987654', '952345678'),
+	(10, 'Cliente 10', 'Cliente 10', 'Direccion 10', '28376654-L', '609876543', '952475648'),
+	(11, 'Cliente 11', 'Cliente 11', 'Direccion 11', '27345678-K', '609876543', '952364567'),
+	(12, 'Cliente 12', 'Cliente 12', 'Direccion 12', '27345678-K', '607987654', '952475673');
+/*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
+
+
 -- Volcando estructura para tabla ambrosia.detafact
 CREATE TABLE IF NOT EXISTS `detafact` (
   `FacturaId` bigint(20) unsigned NOT NULL DEFAULT '0',
@@ -24,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `detafact` (
   KEY `LoteId` (`LoteId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
 
--- Volcando datos para la tabla ambrosia.detafact: ~704 rows (aproximadamente)
+-- Volcando datos para la tabla ambrosia.detafact: ~660 rows (aproximadamente)
 /*!40000 ALTER TABLE `detafact` DISABLE KEYS */;
 INSERT INTO `detafact` (`FacturaId`, `Unidades`, `Descripcion`, `Precio`, `Impuesto`, `ImpEnFac`, `LoteId`, `TabLevel`) VALUES
 	(3, 0, '', 0.00, 0.00, 1, 0, 1),
@@ -617,7 +647,48 @@ INSERT INTO `detafact` (`FacturaId`, `Unidades`, `Descripcion`, `Precio`, `Impue
 	(19, 1, 'Primeros Menus', 0.00, 0.00, 0, 223, 2),
 	(19, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 223, 3),
 	(19, 1, 'Flan de la Casa', 3.00, 10.00, 1, 223, 1),
-	(19, 1, 'Extra Nata', 0.00, 10.00, 0, 223, 2);
+	(19, 1, 'Extra Nata', 0.00, 10.00, 0, 223, 2),
+	(19, 1, 'Menu del Dia', 10.00, 7.00, 1, 224, 1),
+	(19, 1, 'Primeros Menus', 0.00, 0.00, 0, 224, 2),
+	(19, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 224, 3),
+	(19, 1, 'Flan de la Casa', 3.00, 10.00, 1, 224, 1),
+	(19, 1, 'Extra Nata', 0.00, 10.00, 0, 224, 2),
+	(29, 1, 'Flan de la Casa', 3.00, 10.00, 1, 225, 1),
+	(29, 1, 'Cafe con leche', 2.00, 10.00, 1, 225, 1),
+	(52, 1, 'Flan de la Casa', 3.00, 10.00, 1, 226, 1),
+	(53, 1, 'Menu del Dia', 10.00, 7.00, 1, 227, 1),
+	(29, 1, 'Menu del Dia', 10.00, 7.00, 1, 228, 1),
+	(29, 1, 'Primeros Menus', 0.00, 0.00, 0, 228, 2),
+	(29, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 228, 3),
+	(47, 1, 'Menu del Dia', 10.00, 7.00, 1, 229, 1),
+	(47, 1, 'Primeros Menus', 0.00, 0.00, 0, 229, 2),
+	(47, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 229, 3),
+	(47, 1, 'Flan de la Casa', 3.00, 10.00, 1, 229, 1),
+	(54, 1, 'Cafe con leche', 2.00, 10.00, 1, 230, 1),
+	(19, 1, 'Cafe con leche', 2.00, 10.00, 1, 231, 1),
+	(19, 1, 'Cafe Solo', 2.00, 10.00, 1, 231, 1),
+	(19, 1, 'Flan de la Casa', 3.00, 10.00, 1, 232, 1),
+	(19, 1, 'Extra Nata', 0.00, 10.00, 0, 232, 2),
+	(19, 1, 'Menu del Dia', 10.00, 7.00, 1, 233, 1),
+	(19, 1, 'Primeros Menus', 0.00, 0.00, 0, 233, 2),
+	(19, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 233, 3),
+	(19, 1, 'Segundos Menus', 0.00, 0.00, 1, 233, 2),
+	(19, 1, 'Pollo Asado', 0.00, 0.00, 0, 233, 3),
+	(19, 1, 'Menu del Dia', 10.00, 7.00, 1, 234, 1),
+	(19, 1, 'Primeros Menus', 0.00, 0.00, 0, 234, 2),
+	(19, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 234, 3),
+	(19, 1, 'Segundos Menus', 0.00, 0.00, 1, 234, 2),
+	(19, 1, 'Pollo Asado', 0.00, 0.00, 0, 234, 3),
+	(19, 1, 'Flan de la Casa', 3.00, 10.00, 1, 234, 1),
+	(48, 1, 'Flan de la Casa', 3.00, 10.00, 1, 235, 1),
+	(48, 1, 'Ensalada Mixta', 4.00, 10.00, 1, 235, 1),
+	(48, 1, 'Pacharan', 5.00, 10.00, 1, 235, 1),
+	(48, 1, 'Menu del Dia', 10.00, 7.00, 1, 235, 1),
+	(48, 1, 'Primeros Menus', 0.00, 0.00, 0, 235, 2),
+	(48, 1, 'Ensalada Mixta', 0.00, 0.00, 0, 235, 3),
+	(48, 1, 'Sin Cebolla', 0.00, 0.00, 0, 235, 4),
+	(48, 1, 'Segundos Menus', 0.00, 0.00, 1, 235, 2),
+	(48, 1, 'Pollo Asado', 0.00, 0.00, 0, 235, 3);
 /*!40000 ALTER TABLE `detafact` ENABLE KEYS */;
 
 
@@ -724,9 +795,9 @@ CREATE TABLE IF NOT EXISTS `facturas` (
   KEY `Sesion` (`Sesion`),
   KEY `Estado` (`Estado`),
   KEY `Nombre` (`Nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
 
--- Volcando datos para la tabla ambrosia.facturas: ~38 rows (aproximadamente)
+-- Volcando datos para la tabla ambrosia.facturas: ~41 rows (aproximadamente)
 /*!40000 ALTER TABLE `facturas` DISABLE KEYS */;
 INSERT INTO `facturas` (`FacturaId`, `Sesion`, `Estado`, `Nombre`, `Total`, `Cantidad`, `Cambio`, `FechaHora`) VALUES
 	(2, 1, 'A', '888', 0, 0, 0, '2018-01-27 11:37:38'),
@@ -766,7 +837,10 @@ INSERT INTO `facturas` (`FacturaId`, `Sesion`, `Estado`, `Nombre`, `Total`, `Can
 	(48, 1, 'A', '8', 0, 0, 0, '2018-02-17 18:38:52'),
 	(49, 1, 'A', '9', 0, 0, 0, '2018-02-17 19:02:22'),
 	(50, 1, 'A', '56', 0, 0, 0, '2018-02-17 19:11:04'),
-	(51, 1, 'A', '1', 0, 0, 0, '2018-02-17 20:42:01');
+	(51, 1, 'A', '1', 0, 0, 0, '2018-02-17 20:42:01'),
+	(52, 1, 'A', '100', 0, 0, 0, '2018-03-04 20:00:56'),
+	(53, 1, 'A', '111', 0, 0, 0, '2018-03-04 20:01:40'),
+	(54, 1, 'A', '20', 0, 0, 0, '2018-03-05 11:38:54');
 /*!40000 ALTER TABLE `facturas` ENABLE KEYS */;
 
 
@@ -856,9 +930,9 @@ CREATE TABLE IF NOT EXISTS `lotes` (
   `Sesion` tinyint(4) NOT NULL DEFAULT '1',
   PRIMARY KEY (`LoteId`),
   KEY `Sesion` (`Sesion`)
-) ENGINE=InnoDB AUTO_INCREMENT=224 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=236 DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
 
--- Volcando datos para la tabla ambrosia.lotes: ~204 rows (aproximadamente)
+-- Volcando datos para la tabla ambrosia.lotes: ~216 rows (aproximadamente)
 /*!40000 ALTER TABLE `lotes` DISABLE KEYS */;
 INSERT INTO `lotes` (`LoteId`, `Momento`, `NumeElem`, `NombCuen`, `Sesion`) VALUES
 	(2, '2018-01-26 20:56:54', 0, '0', 1),
@@ -1064,7 +1138,19 @@ INSERT INTO `lotes` (`LoteId`, `Momento`, `NumeElem`, `NombCuen`, `Sesion`) VALU
 	(220, '2018-02-20 10:40:30', 5, '5', 1),
 	(221, '2018-02-20 10:50:29', 5, '5', 1),
 	(222, '2018-02-20 10:52:33', 5, '5', 1),
-	(223, '2018-02-20 10:58:15', 5, '5', 1);
+	(223, '2018-02-20 10:58:15', 5, '5', 1),
+	(224, '2018-02-20 11:12:40', 5, '5', 1),
+	(225, '2018-03-04 19:59:34', 2, '10', 1),
+	(226, '2018-03-04 20:00:56', 1, '100', 1),
+	(227, '2018-03-04 20:01:40', 1, '111', 1),
+	(228, '2018-03-04 20:06:42', 3, '10', 1),
+	(229, '2018-03-05 11:36:10', 4, '15', 1),
+	(230, '2018-03-05 11:38:54', 1, '20', 1),
+	(231, '2018-03-05 11:40:03', 2, '5', 1),
+	(232, '2018-06-19 11:16:40', 2, '5', 1),
+	(233, '2018-06-20 10:22:11', 5, '5', 1),
+	(234, '2018-06-20 19:17:10', 6, '5', 1),
+	(235, '2018-07-15 18:30:36', 9, '8', 1);
 /*!40000 ALTER TABLE `lotes` ENABLE KEYS */;
 
 
@@ -1074,7 +1160,7 @@ CREATE TABLE IF NOT EXISTS `terminalconfig` (
   `NombreTerminal` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Volcando datos para la tabla ambrosia.terminalconfig: ~6 rows (aproximadamente)
+-- Volcando datos para la tabla ambrosia.terminalconfig: ~7 rows (aproximadamente)
 /*!40000 ALTER TABLE `terminalconfig` DISABLE KEYS */;
 INSERT INTO `terminalconfig` (`ElementoId`, `NombreTerminal`) VALUES
 	(2194, 'Terminal-Cocina'),

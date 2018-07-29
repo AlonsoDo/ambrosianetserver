@@ -159,12 +159,19 @@ namespace AmbrosiaServer
         public string NIF { get; set; }
         public string Mobil { get; set; }
         public string Fijo { get; set; }
+        public bool Borrado { get; set; }
     }
 
     public class SalvarCliente
     {
         public string NombreEvento { get; set; }
         public Cliente cliente { get; set; }
+    }
+
+    public class ClienteId
+    {
+        public string NombreEvento { get; set; }
+        public int clienteId { get; set; }
     }
 
     public class ClienteIdBak
@@ -179,12 +186,16 @@ namespace AmbrosiaServer
         public string Orden { get; set; }
         public string CadenaBusqueda { get; set; }
         public int Index { get; set; }
+        public bool Filtrar { get; set; }
+        public bool BtUltimoCliente { get; set; }
     }
 
     public class BuscarClienteBak
     {
         public string NombreEvento { get; set; }
         public List<Cliente> listaClientes { get; set; }
+        public int IndiceCliente { get; set; }
+        public int IndiceAbsoluto { get; set; }
     }
 
 }

@@ -380,6 +380,18 @@ namespace AmbrosiaServer
                             Console.WriteLine("Cliente salvado");
                             SalvarClienteDB(salvarCliente);
                         }
+                        else if (EventosControl.NombreEvento == "ActualizarCliente")
+                        {
+                            SalvarCliente salvarCliente = JsonConvert.DeserializeObject<SalvarCliente>(dataFromClient);
+                            Console.WriteLine("Cliente Actualizado");
+                            ActualizarClienteDB(salvarCliente);
+                        }
+                        else if (EventosControl.NombreEvento == "BorrarCliente")
+                        {
+                            ClienteId clienteId = JsonConvert.DeserializeObject<ClienteId>(dataFromClient);
+                            Console.WriteLine("Cliente " + clienteId.clienteId + " borrado");
+                            BorrarClienteDB(clienteId);
+                        }
                         else if (EventosControl.NombreEvento == "ComoBuscarCliente")
                         {
                             ComoBuscarCliente comoBuscarCliente = JsonConvert.DeserializeObject<ComoBuscarCliente>(dataFromClient);
@@ -822,6 +834,106 @@ namespace AmbrosiaServer
                 }                
             }
 
+            public void ActualizarClienteDB(SalvarCliente salvarCliente)
+            {
+                ClienteIdBak clienteIdBak = new ClienteIdBak();
+                //int LastClientId = 0;
+
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+
+                try
+                {
+                    conn.Open();
+                    //MySqlCommand comando = new MySqlCommand("INSERT INTO clientes(NombreComercial,NombreFiscal,Direccion,NIF,Mobil,Fijo) VALUES ('" + salvarCliente.cliente.NombreComercial + "','" + salvarCliente.cliente.NombreFiscal + "','" + salvarCliente.cliente.Direccion + "','" + salvarCliente.cliente.NIF + "','" + salvarCliente.cliente.Mobil + "','" + salvarCliente.cliente.Fijo + "')", conn);
+                    MySqlCommand comando = new MySqlCommand("UPDATE clientes SET NombreComercial = '" + salvarCliente.cliente.NombreComercial + "' , NombreFiscal = '" + salvarCliente.cliente.NombreFiscal + "' , Direccion = '" + salvarCliente.cliente.Direccion + "' , NIF = '" + salvarCliente.cliente.NIF + "' , Mobil = '" + salvarCliente.cliente.Mobil + "' , Fijo = '" + salvarCliente.cliente.Fijo + "' WHERE ClienteId = " + salvarCliente.cliente.ClienteId, conn);
+                    comando.ExecuteNonQuery();
+                    //LastClientId = (int)comando.LastInsertedId;
+                    Console.WriteLine("Id cliente:" + salvarCliente.cliente.ClienteId);
+                    clienteIdBak.NombreEvento = "ClienteIdBak";
+                    clienteIdBak.clienteId = salvarCliente.cliente.ClienteId;
+
+                    output = JsonConvert.SerializeObject(clienteIdBak);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("An exception of type " + e.GetType() +
+                    " was encountered while inserting the data.");
+                    Console.WriteLine("Neither record was written to database.");
+                    clienteIdBak.NombreEvento = "ClienteIdBak";
+                    clienteIdBak.clienteId = -1;
+
+                    output = JsonConvert.SerializeObject(clienteIdBak);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            public void BorrarClienteDB(ClienteId clienteId)
+            {
+                ClienteIdBak clienteIdBak = new ClienteIdBak();
+                
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+
+                try
+                {
+                    conn.Open();
+                    MySqlCommand comando = new MySqlCommand("DELETE FROM clientes WHERE ClienteId = " + clienteId.clienteId, conn);
+                    comando.ExecuteNonQuery();
+                    
+                    Console.WriteLine("Id cliente:" + clienteId.clienteId);
+                    clienteIdBak.NombreEvento = "BorrarCliente";
+                    clienteIdBak.clienteId = clienteId.clienteId;
+
+                    output = JsonConvert.SerializeObject(clienteIdBak);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("An exception of type " + e.GetType() +
+                    " was encountered while inserting the data.");
+                    Console.WriteLine("Neither record was written to database.");
+                    clienteIdBak.NombreEvento = "BorrarCliente";
+                    clienteIdBak.clienteId = -1;
+
+                    output = JsonConvert.SerializeObject(clienteIdBak);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
             public void BuscarCliente(ComoBuscarCliente comoBuscarCliente)
             {
                 List<Cliente> ListaClientes = new List<Cliente>();
@@ -832,12 +944,79 @@ namespace AmbrosiaServer
                 NetworkStream broadcastStream = broadcastSocket.GetStream();
                 Byte[] broadcastBytes = null;
                 string output = null;
+                string sql = null;
+                int nFilas = 0;
+                int nPaginas = 0;
+                int UltimoIndex = 0;
+                int nResto = 0;
                 try
                 {                    
                     Console.WriteLine("Connecting to MySQL...");
                     conn.Open();
                     // Perform database operations
-                    string sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "' order by " + comoBuscarCliente.Orden + " limit " + comoBuscarCliente.Index + ",5";
+                    if ((comoBuscarCliente.Filtrar == false) && (comoBuscarCliente.BtUltimoCliente == true))
+                    {
+                        Console.WriteLine("Calculando ultimo cliente...");
+                        nFilas = 0;
+                        MySqlCommand comando = new MySqlCommand("SELECT COUNT(*) FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "'", conn);
+                        MySqlDataReader reader = comando.ExecuteReader();
+                        if (reader.HasRows)
+                        {
+                            reader.Read();
+                            Console.WriteLine("Numero filas:" + reader[0]);
+                            nFilas = reader.GetInt32(0);
+                            reader.Close();
+                        }
+                        else
+                        {
+                            nFilas = 0;
+                        }
+                        nPaginas = nFilas / 5;
+                        UltimoIndex = nPaginas * 5;
+                        nResto = nFilas % 5;
+                        if (nResto == 0)
+                        {
+                            UltimoIndex = UltimoIndex - 5;
+                        }
+                        sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "' order by " + comoBuscarCliente.Orden + " limit " + UltimoIndex + ",5";
+                    }
+                    else if ((comoBuscarCliente.Filtrar == true) && (comoBuscarCliente.BtUltimoCliente == true))
+                    {
+                        Console.WriteLine("Calculando ultimo cliente...");
+                        nFilas = 0;
+                       // MySqlCommand comando = new MySqlCommand("SELECT COUNT(*) FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "'", conn);
+                        MySqlCommand comando = new MySqlCommand("SELECT COUNT(*) FROM clientes WHERE " + comoBuscarCliente.Orden + " LIKE '%" + comoBuscarCliente.CadenaBusqueda + "%'", conn);                    
+                        MySqlDataReader reader = comando.ExecuteReader();
+                        if (reader.HasRows)
+                        {
+                            reader.Read();
+                            Console.WriteLine("Numero filas:" + reader[0]);
+                            nFilas = reader.GetInt32(0);
+                            reader.Close();
+                        }
+                        else
+                        {
+                            nFilas = 0;
+                        }
+                        nPaginas = nFilas / 5;
+                        UltimoIndex = nPaginas * 5;
+                        nResto = nFilas % 5;
+                        if (nResto == 0)
+                        {
+                            UltimoIndex = UltimoIndex - 5;
+                        }
+                        //sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "' order by " + comoBuscarCliente.Orden + " limit " + UltimoIndex + ",5";
+                        sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " LIKE '%" + comoBuscarCliente.CadenaBusqueda + "%'" + " limit " + UltimoIndex + ",5";                    
+                        
+                    }
+                    else if ((comoBuscarCliente.Filtrar == false) && (comoBuscarCliente.BtUltimoCliente == false))
+                    {
+                        sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " >= '" + comoBuscarCliente.CadenaBusqueda + "' order by " + comoBuscarCliente.Orden + " limit " + comoBuscarCliente.Index + ",5";
+                    }
+                    else if ((comoBuscarCliente.Filtrar == true) && (comoBuscarCliente.BtUltimoCliente == false))
+                    {
+                        sql = "SELECT * FROM clientes WHERE " + comoBuscarCliente.Orden + " LIKE '%" + comoBuscarCliente.CadenaBusqueda + "%' limit " + comoBuscarCliente.Index + ",5";
+                    }
                     MySqlCommand cmd = new MySqlCommand(sql, conn);
                     MySqlDataReader rdr = cmd.ExecuteReader();
                     while (rdr.Read())
@@ -859,6 +1038,8 @@ namespace AmbrosiaServer
                     BuscarClienteBak buscarClienteBak = new BuscarClienteBak();
                     buscarClienteBak.NombreEvento = "BuscarClienteBak";
                     buscarClienteBak.listaClientes = ListaClientes;
+                    buscarClienteBak.IndiceCliente = nResto;
+                    buscarClienteBak.IndiceAbsoluto = UltimoIndex;
                     output = JsonConvert.SerializeObject(buscarClienteBak);                    
                     broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
                     broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);

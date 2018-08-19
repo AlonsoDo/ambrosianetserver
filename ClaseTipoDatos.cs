@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.ComponentModel;
 
 namespace AmbrosiaServer
 {
@@ -198,4 +199,69 @@ namespace AmbrosiaServer
         public int IndiceAbsoluto { get; set; }
     }
 
+    public class NumeroCuenta
+    {
+        public string NombreEvento { get; set; }
+        public string NumeCuenta { get; set; }
+    }
+
+    public class LineaDetalleFactura
+    {
+        public int FacturaId { get; set; }
+        public int Unidades { get; set; }
+        public string Descripcion { get; set; }
+        public decimal Precio { get; set; }
+        public decimal Impuesto { get; set; }
+        public int ImpEnFac { get; set; }
+        public int LoteId { get; set; }
+        public int TabLevel { get; set; }
+    }
+
+    public class Factura
+    {
+        public string NombreEvento { get; set; }
+        public string Estado { get; set; }
+        public BindingList<LineaDetalleFactura> listaDetalleFactura { get; set; }
+    }
+
+    public class RecargarFacturas
+    {
+        public string NombreEvento { get; set; }
+        public bool Abiertas { get; set; }
+        public bool Pendientes { get; set; }
+        public bool Cerradas { get; set; }
+    }
+
+    public class DatosFactura
+    {
+        public string Nombre { get; set; }
+        public string Estado { get; set; }
+        public string FormaPago { get; set; }
+        public decimal Total { get; set; }
+        public decimal Cantidad { get; set; }
+        public decimal Cambio { get; set; }
+        public string FechaHora { get; set; }
+    }
+
+    public class DatosFacturas
+    {
+        public string NombreEvento { get; set; }
+        public BindingList<DatosFactura> datosFacturas { get; set; }
+    }
+
+    public class PasarAPendiente
+    {
+        public string NombreEvento { get; set; }
+        public string NombreFactura { get; set; }
+    }
+
+    public class CerrarCuenta
+    {
+        public string NombreEvento { get; set; }
+        public string NombreFactura { get; set; }
+        public Decimal Total { get; set; }
+        public Decimal Entrega { get; set; }
+        public Decimal Cambio { get; set; }
+        public string FormaPago { get; set; }
+    }
 }

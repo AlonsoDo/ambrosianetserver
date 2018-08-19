@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.ComponentModel;
+using System.Globalization;
 
 namespace AmbrosiaServer
 {    
@@ -93,9 +95,10 @@ namespace AmbrosiaServer
                 // Recibir conexion cliente
                 clientSocket = serverSocket.AcceptTcpClient();
 
-                clientSocket.SendBufferSize = 1048576;
-                
-                byte[] bytesFrom = new byte[1048576];
+                clientSocket.SendBufferSize = 2097152;
+                clientSocket.ReceiveBufferSize = 2097152;
+
+                byte[] bytesFrom = new byte[2097152];
                 string dataFromClient = null;
 
                 // Leer stream
@@ -129,6 +132,8 @@ namespace AmbrosiaServer
             public void startClient(TcpClient inClientSocket, string inClientId)
             {
                 this.clientSocket = inClientSocket;
+                this.clientSocket.SendBufferSize = 2097152;
+                this.clientSocket.ReceiveBufferSize = 2097152;
                 this.ClientId = inClientId;                
                 SendImpresorasTerminales();
                 //Thread.Sleep(1000);                
@@ -310,14 +315,19 @@ namespace AmbrosiaServer
 
             private void SocketTrafic()
             {
-                byte[] bytesFrom = new byte[1048576];
+                byte[] bytesFrom = new byte[2097152];
                 string dataFromClient = null;                
 
                 while ((true))
                 {
                     try
                     {
-                        NetworkStream networkStream = clientSocket.GetStream();
+                        
+                        //TcpClient broadcastSocket;
+                        //broadcastSocket = this.clientSocket;
+                        //NetworkStream networkStream = this.clientSocket.GetStream();
+
+                        NetworkStream networkStream = this.clientSocket.GetStream();
                         networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                         dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
                         dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
@@ -334,7 +344,7 @@ namespace AmbrosiaServer
                             var EventosControl2 = JsonConvert.DeserializeAnonymousType(dataFromClient, definition2);
                             Console.WriteLine(EventosControl2.IdCliente + " has disconnected");
                             clientsList.Remove(EventosControl2.IdCliente);
-                            clientSocket.Close();                            
+                            this.clientSocket.Close();                            
                             break;
                         }
                         else if (EventosControl.NombreEvento == "AskForElements")
@@ -396,6 +406,30 @@ namespace AmbrosiaServer
                         {
                             ComoBuscarCliente comoBuscarCliente = JsonConvert.DeserializeObject<ComoBuscarCliente>(dataFromClient);
                             BuscarCliente(comoBuscarCliente);
+                        }
+                        else if (EventosControl.NombreEvento == "AbrirCuenta")
+                        {
+                            NumeroCuenta numeroCuenta = JsonConvert.DeserializeObject<NumeroCuenta>(dataFromClient);
+                            Console.WriteLine("Cargando cuenta: " + numeroCuenta.NumeCuenta);
+                            AbrirCuenta(numeroCuenta.NumeCuenta);
+                        }
+                        else if (EventosControl.NombreEvento == "RecargarFacturas")
+                        {
+                            RecargarFacturas recargarFacturas = JsonConvert.DeserializeObject<RecargarFacturas>(dataFromClient);
+                            Console.WriteLine("Recargando facturas");
+                            RecargarFacturas(recargarFacturas);
+                        }
+                        else if (EventosControl.NombreEvento == "PasarAPendiente")
+                        {
+                            Console.WriteLine("Evento PasarAPendiente");
+                            PasarAPendiente pasarAPendiente = JsonConvert.DeserializeObject<PasarAPendiente>(dataFromClient);
+                            PasarAPendiente(pasarAPendiente);
+                        }
+                        else if (EventosControl.NombreEvento == "CerrarCuenta")
+                        {
+                            Console.WriteLine("Evento CerrarCuenta");
+                            CerrarCuenta cerrarCuenta = JsonConvert.DeserializeObject<CerrarCuenta>(dataFromClient);
+                            CerrarCuenta(cerrarCuenta);
                         }
                     }
                     catch (Exception ex)
@@ -751,8 +785,8 @@ namespace AmbrosiaServer
                     for (int i = 0; i < PedidoEnviado.dataLinea.Count; i++)
                     {                        
                         Command = Command + "(" + LastFactId + "," + PedidoEnviado.dataLinea[i].Unids + ",'"
-                            + PedidoEnviado.dataLinea[i].Descripcion + "','" + PedidoEnviado.dataLinea[i].Precio + "','"
-                            + PedidoEnviado.dataLinea[i].Impuesto + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + ","
+                            + PedidoEnviado.dataLinea[i].Descripcion + "','" + PedidoEnviado.dataLinea[i].Precio.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "','"
+                            + PedidoEnviado.dataLinea[i].Impuesto.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + ","
                             + LastLoteId + "," + PedidoEnviado.dataLinea[i].TabLevel + "),";
                     }
                     Command = Command.TrimEnd(',');
@@ -1053,6 +1087,225 @@ namespace AmbrosiaServer
                 Console.WriteLine("Done.");
             }
 
+            public void AbrirCuenta(string NumeCuenta)
+            {
+                Factura factura = new Factura();
+                int LastFactId;
+                string Estado = null;
+                BindingList<LineaDetalleFactura> listaDetalleFactura = new BindingList<LineaDetalleFactura>();
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT FacturaId, Estado FROM facturas WHERE Sesion = 1 AND ( Estado = 'A' OR Estado = 'P' ) AND Nombre = '" + NumeCuenta + "'";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+
+                    if (rdr.HasRows)
+                    {
+                        rdr.Read();
+                        Console.WriteLine("La factura existe:" + rdr[0]);
+                        LastFactId = rdr.GetInt32(0);
+                        Estado = rdr.GetString(1);
+                        rdr.Close();
+
+                        // Perform database operations
+                        string sql2 = "SELECT *  FROM detafact WHERE FacturaId = " + LastFactId;
+                        MySqlCommand cmd2 = new MySqlCommand(sql2, conn);
+                        MySqlDataReader rdr2 = cmd2.ExecuteReader();                        
+                        
+                        while (rdr2.Read())
+                        {
+                            Console.WriteLine(rdr2[1] + " -- " + rdr2[2]);
+                            listaDetalleFactura.Add(new LineaDetalleFactura()
+                            {
+                                FacturaId = rdr2.GetInt32(0),
+                                Unidades = rdr2.GetInt32(1),
+                                //Descripcion = rdr2.GetString(2),
+                                Descripcion = new String('-', 3 * (rdr2.GetInt32(7) - 1)) + rdr2.GetString(rdr2.GetOrdinal("Descripcion")),
+                                Precio = rdr2.GetDecimal(3),
+                                Impuesto = rdr2.GetDecimal(4),
+                                ImpEnFac = rdr2.GetInt32(5),
+                                LoteId = rdr2.GetInt32(6),
+                                TabLevel = rdr2.GetInt32(7)
+                            });
+                        }
+                        
+                        rdr2.Close();                        
+                    }                    
+                    else
+                    {
+                        rdr.Close();
+                        Console.WriteLine("La factura no existe");                       
+                    }                    
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+                Console.WriteLine("Done.");
+
+                factura.NombreEvento = "FacturaBak";
+                factura.Estado = Estado;
+                factura.listaDetalleFactura = listaDetalleFactura;
+                
+                // Send
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+                output = JsonConvert.SerializeObject(factura);
+                Console.WriteLine(output);
+                broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                broadcastStream.Flush();
+            }
+
+            private void RecargarFacturas(RecargarFacturas recargarFacturas)
+            {
+                string Abiertas = "";
+                string Pendientes = "";
+                string Cerradas = "";
+
+                if (recargarFacturas.Abiertas)
+                {
+                    Abiertas = "A";
+                }
+                else
+                {
+                    Abiertas = "Nula";
+                }
+
+                if (recargarFacturas.Pendientes)
+                {
+                    Pendientes = "P";
+                }
+                else
+                {
+                    Pendientes = "Nula";
+                }
+
+                if (recargarFacturas.Cerradas)
+                {
+                    Cerradas = "C";
+                }
+                else
+                {
+                    Cerradas = "Nula";
+                }
+
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                DatosFacturas datosFacturas = new DatosFacturas();
+                BindingList<DatosFactura> datosFactura = new BindingList<DatosFactura>();
+                string format = "HH:mm";
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT * FROM facturas WHERE Sesion = 1 and (Estado = '" + Abiertas + "' or Estado = '" + Pendientes + "' or Estado = '" + Cerradas +"') ORDER BY FacturaId DESC";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine(rdr[2] + " -- " + rdr[3]);
+                        string ResultEstado = null;
+                        string BufferEstado = rdr.GetString(2);
+                        if (BufferEstado == "A")
+                        {
+                            ResultEstado = "Abierta";
+                        }
+                        else if (BufferEstado == "P")
+                        {
+                            ResultEstado = "Pendiente";
+                        }
+                        else if (BufferEstado == "C")
+                        {
+                            ResultEstado = "Cerrada";
+                        }
+                        datosFactura.Add(new DatosFactura                        
+                        {
+                            Nombre = rdr.GetString(3),
+                            Estado = ResultEstado,
+                            FormaPago = rdr.GetString(8),
+                            Total = rdr.GetDecimal(4),
+                            Cantidad = rdr.GetDecimal(5),
+                            Cambio = rdr.GetDecimal(6),                             
+                            FechaHora = rdr.GetDateTime(7).ToString(format)                          
+                        });
+                    }
+                    rdr.Close();
+                    datosFacturas.NombreEvento = "DatosFacturasBak";
+                    datosFacturas.datosFacturas = datosFactura;
+
+                    // Send
+                    TcpClient broadcastSocket;
+                    broadcastSocket = this.clientSocket;
+                    NetworkStream broadcastStream = broadcastSocket.GetStream();
+                    Byte[] broadcastBytes = null;
+                    string output = null;
+                    output = JsonConvert.SerializeObject(datosFacturas);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+            }
+
+            private void PasarAPendiente(PasarAPendiente pasarAPendiente)
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                      Console.WriteLine("Connecting to MySQL...");
+                      conn.Open();
+                      // Perform database operations
+                      string sql = "UPDATE facturas SET Estado = 'P' WHERE Sesion = 1 AND Estado = 'A' AND Nombre = '" + pasarAPendiente.NombreFactura + "'";
+                      MySqlCommand cmd = new MySqlCommand(sql, conn);
+                      cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                     Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+            }
+
+            private void CerrarCuenta(CerrarCuenta cerrarCuenta)
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    // Perform database operations
+                    string Total = cerrarCuenta.Total.ToString(new CultureInfo("en-US"));
+                    string Cantidad = cerrarCuenta.Entrega.ToString(new CultureInfo("en-US"));
+                    string Cambio = cerrarCuenta.Cambio.ToString(new CultureInfo("en-US"));
+                    string sql = "UPDATE facturas SET Estado = 'C', Total = " + Total + ", Cantidad = " + Cantidad + ", Cambio = " + Cambio + ", FormaPago = '" + cerrarCuenta.FormaPago + "' WHERE Sesion = 1 AND ( Estado = 'A'  OR Estado = 'P' ) AND Nombre = '" + cerrarCuenta.NombreFactura + "'";
+                    
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+            }
         }    
     }
 }

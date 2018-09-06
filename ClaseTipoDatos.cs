@@ -34,6 +34,7 @@ namespace AmbrosiaServer
         public decimal Impuesto { get; set; }
         public int ImprimirEnFactura { get; set; }
         public int ImprimirEnComanda { get; set; }
+        public int Preferencia { get; set; }
     }
 
     public class GetElementsData
@@ -64,6 +65,7 @@ namespace AmbrosiaServer
         public int ImprimirEnFactura { get; set; }
         public int ImprimirEnComanda { get; set; }
         public int TabLevel { get; set; }
+        public int Preferencia { get; set; }
     }
 
     public class Envio
@@ -71,6 +73,8 @@ namespace AmbrosiaServer
         public string NombreEvento { get; set; }
         public string NumeCuen { get; set; }
         public List<LineaPedido> dataLinea { get; set; }
+        public Decimal totalFactura { get; set; }
+        public int EmpleadoId { get; set; }
     }
 
     public class SalidaPedido
@@ -215,6 +219,7 @@ namespace AmbrosiaServer
         public int ImpEnFac { get; set; }
         public int LoteId { get; set; }
         public int TabLevel { get; set; }
+        public int Preferencia { get; set; }
     }
 
     public class Factura
@@ -263,5 +268,29 @@ namespace AmbrosiaServer
         public Decimal Entrega { get; set; }
         public Decimal Cambio { get; set; }
         public string FormaPago { get; set; }
+    }
+
+    public class TotalesCuentas
+    {
+        public string NombreEvento { get; set; }
+        public int Abiertas { get; set; }
+        public int Pendientes { get; set; }
+        public int Cerradas { get; set; }
+        public Decimal TotalAbiertas { get; set; }
+        public Decimal TotalPendientes { get; set; }
+        public Decimal TotalCerradas { get; set; }
+    }
+
+    public class CierreCaja
+    {
+        public string NombreEvento { get; set; }
+        public string Fecha { get; set; }
+        public string Hora { get; set; }
+    }
+
+    public class ResultadoCierreCaja
+    {
+        public string NombreEvento { get; set; }
+        public string Mensaje { get; set; }
     }
 }

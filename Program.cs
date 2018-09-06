@@ -135,8 +135,7 @@ namespace AmbrosiaServer
                 this.clientSocket.SendBufferSize = 2097152;
                 this.clientSocket.ReceiveBufferSize = 2097152;
                 this.ClientId = inClientId;                
-                SendImpresorasTerminales();
-                //Thread.Sleep(1000);                
+                SendImpresorasTerminales();                           
                 SendElementsData(0);
                 this.ctThread = new Thread(SocketTrafic);
                 ctThread.Start();
@@ -181,7 +180,8 @@ namespace AmbrosiaServer
                             Precio = rdr.GetDecimal(rdr.GetOrdinal("Precio")),
                             Impuesto = rdr.GetDecimal(rdr.GetOrdinal("Impuesto")),
                             ImprimirEnFactura = rdr.GetInt16(rdr.GetOrdinal("ImprimirEnFactura")),
-                            ImprimirEnComanda = rdr.GetInt16(rdr.GetOrdinal("ImprimirEnComanda"))
+                            ImprimirEnComanda = rdr.GetInt16(rdr.GetOrdinal("ImprimirEnComanda")),
+                            Preferencia = rdr.GetInt16(rdr.GetOrdinal("Preferencia"))
                         });
 
                     }
@@ -322,11 +322,6 @@ namespace AmbrosiaServer
                 {
                     try
                     {
-                        
-                        //TcpClient broadcastSocket;
-                        //broadcastSocket = this.clientSocket;
-                        //NetworkStream networkStream = this.clientSocket.GetStream();
-
                         NetworkStream networkStream = this.clientSocket.GetStream();
                         networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                         dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
@@ -430,6 +425,18 @@ namespace AmbrosiaServer
                             Console.WriteLine("Evento CerrarCuenta");
                             CerrarCuenta cerrarCuenta = JsonConvert.DeserializeObject<CerrarCuenta>(dataFromClient);
                             CerrarCuenta(cerrarCuenta);
+                        }
+                        else if (EventosControl.NombreEvento == "TotalesCuentas")
+                        {
+                            Console.WriteLine("Evento TotalesCuentas");
+                            TotalesCuentas totalesCuentas = JsonConvert.DeserializeObject<TotalesCuentas>(dataFromClient);
+                            ResumenTotalesCuentas(totalesCuentas);
+                        }
+                        else if (EventosControl.NombreEvento == "CierreCaja")
+                        {
+                            Console.WriteLine("Evento Cierre Caja");
+                            CierreCaja cierreCaja = JsonConvert.DeserializeObject<CierreCaja>(dataFromClient);
+                            CierreCaja(cierreCaja);
                         }
                     }
                     catch (Exception ex)
@@ -755,27 +762,35 @@ namespace AmbrosiaServer
                     string format = "yyyy-MM-dd HH:mm:ss";
                     int NumeElem = PedidoEnviado.dataLinea.Count;
                     string NombCuen = PedidoEnviado.NumeCuen;
+                    int EmpleadoId = PedidoEnviado.EmpleadoId;
+                    Decimal TotalLote = PedidoEnviado.totalFactura;
                     
-                    MyCommand.CommandText = "INSERT INTO lotes(Momento,NumeElem,NombCuen) VALUES ('" + time.ToString(format) + "'," + NumeElem + ",'" + NombCuen + "')"; 
+                    MyCommand.CommandText = "INSERT INTO lotes(Momento,NumeElem,NombCuen,EmpleadoId,TotalLote) VALUES ('" + time.ToString(format) + "'," + NumeElem + ",'" + NombCuen + "'," + EmpleadoId + ",'" + TotalLote.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "')"; 
                     MyCommand.ExecuteNonQuery();
                     int LastLoteId = (int)MyCommand.LastInsertedId;
                     Console.WriteLine("Id lote:" + LastLoteId);
                     
                     int LastFactId = 0;
-                    MySqlCommand comando = new MySqlCommand("SELECT FacturaId FROM facturas WHERE Sesion=1 AND Estado='A' AND Nombre='" + NombCuen + "'",conn,MyTransaction);
+                    MySqlCommand comando = new MySqlCommand("SELECT FacturaId,Total FROM facturas WHERE Sesion=1 AND Estado='A' AND Nombre='" + NombCuen + "'",conn,MyTransaction);
                     MySqlDataReader reader = comando.ExecuteReader();
                     if (reader.HasRows)
                     {                        
                         reader.Read();
                         Console.WriteLine("La factura existe:" + reader[0]);
-                        LastFactId = reader.GetInt32(0);
+                        Console.WriteLine("Total nuevo:" +PedidoEnviado.totalFactura);
+                        LastFactId = reader.GetInt32(0);                        
+                        Decimal TotalNuevo = reader.GetDecimal(1) + PedidoEnviado.totalFactura;
                         reader.Close();
+                        MySqlCommand comando3 = new MySqlCommand("UPDATE facturas SET Total ='" + TotalNuevo.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "' WHERE FacturaId = " + LastFactId , conn , MyTransaction);
+                        comando3.ExecuteNonQuery(); 
+                        Console.WriteLine("Nuevo total factura:" + TotalNuevo);
                     }
                     else
                     {
                         reader.Close();
                         Console.WriteLine("La factura no existe");
-                        MySqlCommand comando2 = new MySqlCommand("INSERT INTO facturas(Nombre,FechaHora) VALUES ('" + NombCuen + "','" + time.ToString(format) + "')",conn,MyTransaction);
+                        String Total = PedidoEnviado.totalFactura.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+                        MySqlCommand comando2 = new MySqlCommand("INSERT INTO facturas(Nombre,FechaHora,Total) VALUES ('" + NombCuen + "','" + time.ToString(format) + "','" + Total + "')", conn, MyTransaction);
                         comando2.ExecuteNonQuery();                        
                         LastFactId = (int)comando2.LastInsertedId;
                         Console.WriteLine("Nuevo Id factura:" + LastFactId);
@@ -787,10 +802,10 @@ namespace AmbrosiaServer
                         Command = Command + "(" + LastFactId + "," + PedidoEnviado.dataLinea[i].Unids + ",'"
                             + PedidoEnviado.dataLinea[i].Descripcion + "','" + PedidoEnviado.dataLinea[i].Precio.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "','"
                             + PedidoEnviado.dataLinea[i].Impuesto.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "'," + PedidoEnviado.dataLinea[i].ImprimirEnFactura + ","
-                            + LastLoteId + "," + PedidoEnviado.dataLinea[i].TabLevel + "),";
+                            + LastLoteId + "," + PedidoEnviado.dataLinea[i].TabLevel + "," + PedidoEnviado.dataLinea[i].Preferencia + "),";
                     }
                     Command = Command.TrimEnd(',');
-                    MyCommand.CommandText = "INSERT INTO detafact(FacturaId,Unidades,Descripcion,Precio,Impuesto,ImpEnFac,LoteId,TabLevel) VALUES " + Command;
+                    MyCommand.CommandText = "INSERT INTO detafact(FacturaId,Unidades,Descripcion,Precio,Impuesto,ImpEnFac,LoteId,TabLevel,Preferencia) VALUES " + Command;
                     MyCommand.ExecuteNonQuery();
                     MyTransaction.Commit();
                 }
@@ -1130,7 +1145,8 @@ namespace AmbrosiaServer
                                 Impuesto = rdr2.GetDecimal(4),
                                 ImpEnFac = rdr2.GetInt32(5),
                                 LoteId = rdr2.GetInt32(6),
-                                TabLevel = rdr2.GetInt32(7)
+                                TabLevel = rdr2.GetInt32(7),
+                                Preferencia = rdr2.GetInt32(8)
                             });
                         }
                         
@@ -1305,6 +1321,136 @@ namespace AmbrosiaServer
                     Console.WriteLine(ex.ToString());
                 }
                 conn.Close();
+            }
+
+            private void ResumenTotalesCuentas(TotalesCuentas totalesCuentas)
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                //TotalesCuentas totalesCuentas = new TotalesCuentas();
+                string Estado = "";
+                Decimal TotalAbiertas = 0;
+                Decimal TotalPendientes = 0;
+                Decimal TotalCerradas = 0;
+                int Abiertas = 0;
+                int Pendientes = 0;
+                int Cerradas = 0;
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    // Perform database operations
+                    string sql = "SELECT Estado,Total FROM facturas WHERE Sesion = 1 ";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine(rdr[0] + " -- " + rdr[1]);
+                        Estado = rdr.GetString(0);
+                        if (Estado == "A")
+                        {
+                            Abiertas = Abiertas + 1;
+                            TotalAbiertas = TotalAbiertas + rdr.GetDecimal(1);
+                        }
+                        else if (Estado == "P")
+                        {
+                            Pendientes = Pendientes + 1;
+                            TotalPendientes = TotalPendientes + rdr.GetDecimal(1);
+                        }
+                        else if (Estado == "C")
+                        {
+                            Cerradas = Cerradas + 1;
+                            TotalCerradas = TotalCerradas + rdr.GetDecimal(1);
+                        }                        
+                    }
+                    rdr.Close();
+                    totalesCuentas.NombreEvento = "TotalesCuentasBak";
+                    totalesCuentas.Abiertas = Abiertas;
+                    totalesCuentas.Pendientes = Pendientes;
+                    totalesCuentas.Cerradas = Cerradas;
+                    totalesCuentas.TotalAbiertas = TotalAbiertas;
+                    totalesCuentas.TotalPendientes = TotalPendientes;
+                    totalesCuentas.TotalCerradas = TotalCerradas;
+
+                    // Send
+                    TcpClient broadcastSocket;
+                    broadcastSocket = this.clientSocket;
+                    NetworkStream broadcastStream = broadcastSocket.GetStream();
+                    Byte[] broadcastBytes = null;
+                    string output = null;
+                    output = JsonConvert.SerializeObject(totalesCuentas);
+                    Console.WriteLine(output);
+                    broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                conn.Close();
+            }
+
+            private void CierreCaja(CierreCaja cierreCaja)
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                Decimal TotalCuentas = 0;
+                String FechaHora = cierreCaja.Fecha + " " + cierreCaja.Hora;
+                ResultadoCierreCaja resultadoCierreCaja = new ResultadoCierreCaja();
+                resultadoCierreCaja.NombreEvento = "ResultadoCierreCaja";
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+                    
+                    // Perform database operations
+                    string sql = "SELECT Total FROM facturas WHERE Sesion = 1 AND Estado = 'C'";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        TotalCuentas = TotalCuentas + rdr.GetDecimal(0);
+                    }
+                    if (rdr.HasRows)
+                    {
+                        String cTotalCuentas = TotalCuentas.ToString(new CultureInfo("en-US"));
+                        rdr.Close();
+                        Console.WriteLine("Total cuentas abiertas:" + TotalCuentas.ToString(new CultureInfo("en-US")));
+                        MySqlCommand cmd2 = new MySqlCommand("INSERT INTO totales(FechaHora,Total) VALUES ('" + FechaHora + "','" + cTotalCuentas + "')", conn);
+                        cmd2.ExecuteNonQuery();
+                        //Reset Sesion
+                        MySqlCommand cmd3 = new MySqlCommand("Update lotes l Inner Join facturas f on (f.Sesion = 1 and l.NombCuen = f.Nombre and f.Estado = 'C') set l.Sesion = 0", conn);
+                        cmd3.ExecuteNonQuery();
+                        MySqlCommand cmd4 = new MySqlCommand("UPDATE facturas SET Sesion = 0 WHERE Sesion = 1 AND Estado = 'C'", conn);
+                        cmd4.ExecuteNonQuery();
+                        resultadoCierreCaja.Mensaje = "Se ha procedido al cierre de caja";
+                    }
+                    else
+                    {
+                        resultadoCierreCaja.Mensaje = "No hay cuentas para cerrar caja";
+                    }
+                 }
+                 catch (Exception ex)
+                 {
+                     Console.WriteLine(ex.ToString());
+                     resultadoCierreCaja.Mensaje = "Ha habido algun error en la operacion";
+                 }
+                 conn.Close();
+                 Console.WriteLine("Done.");
+                 
+                 // Send
+                 TcpClient broadcastSocket;
+                 broadcastSocket = this.clientSocket;
+                 NetworkStream broadcastStream = broadcastSocket.GetStream();
+                 Byte[] broadcastBytes = null;
+                 string output = null;
+                 output = JsonConvert.SerializeObject(resultadoCierreCaja);
+                 Console.WriteLine(output);
+                 broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                 broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                 broadcastStream.Flush();
             }
         }    
     }

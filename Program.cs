@@ -438,6 +438,12 @@ namespace AmbrosiaServer
                             CierreCaja cierreCaja = JsonConvert.DeserializeObject<CierreCaja>(dataFromClient);
                             CierreCaja(cierreCaja);
                         }
+                        else if (EventosControl.NombreEvento == "CalcularTotalEmpleado")
+                        {
+                            CalcularTotalEmpleado calcularTotalEmpleado = JsonConvert.DeserializeObject<CalcularTotalEmpleado>(dataFromClient);
+                            Console.WriteLine("Codigo Empleado: " + calcularTotalEmpleado.CodigoEmpleado);
+                            CalcularTotalEmpleado(calcularTotalEmpleado);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -1451,6 +1457,50 @@ namespace AmbrosiaServer
                  broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
                  broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
                  broadcastStream.Flush();
+            }
+
+            private void CalcularTotalEmpleado(CalcularTotalEmpleado calcularTotalEmpleado)
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["AmbrosiaBD"].ConnectionString;
+                MySqlConnection conn = new MySqlConnection(connectionString);
+                Decimal Total = 0;
+                try
+                {
+                    Console.WriteLine("Connecting to MySQL...");
+                    conn.Open();
+
+                    // Perform database operations
+                    string sql = "SELECT TotalLote FROM lotes WHERE Sesion = 1 AND EmpleadoId = '" + calcularTotalEmpleado.CodigoEmpleado + "'";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        Total = Total + rdr.GetDecimal(0);
+                    }                    
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());                    
+                }
+                conn.Close();
+                Console.WriteLine("Done.");
+
+                TotalEmpleadoBack total = new TotalEmpleadoBack();
+                total.NombreEvento = "TotalEmpleadoBack";
+                total.TotalEmpleado = Total;
+
+                // Send
+                TcpClient broadcastSocket;
+                broadcastSocket = this.clientSocket;
+                NetworkStream broadcastStream = broadcastSocket.GetStream();
+                Byte[] broadcastBytes = null;
+                string output = null;
+                output = JsonConvert.SerializeObject(total);
+                Console.WriteLine(output);
+                broadcastBytes = Encoding.ASCII.GetBytes(output + "$");
+                broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                broadcastStream.Flush();
             }
         }    
     }
